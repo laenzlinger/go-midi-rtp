@@ -24,8 +24,13 @@ const minimumBufferLengt = 4
 // ControlMessage represents the Apple MIDI control messages.ControlMessage
 //
 // see https://en.wikipedia.org/wiki/RTP-MIDI
+// see https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 type ControlMessage struct {
-	cmd command
+	Cmd command
+	Version uint32
+	Token uint32
+	SSRC uint32
+	Name string
 }
 
 // Parse a buffer into a control message
@@ -40,11 +45,19 @@ func Parse(buffer []byte) (m ControlMessage, err error) {
 	}
 
 	cmd := command(binary.BigEndian.Uint16(buffer[2:4]))
+	message := ControlMessage{Cmd: cmd}
 	switch cmd {
 	case invitation:
+		fallthrough
 	case invitationAccepted:
+		fallthrough
 	case invitationRejected:
+		fallthrough
 	case end:
+		message.Version = binary.BigEndian.Uint32(buffer[4:8])
+		message.Token = binary.BigEndian.Uint32(buffer[8:12])
+		message.SSRC = binary.BigEndian.Uint32(buffer[12:16])
+		message.Name = string(buffer[16:])
 		/*
 			this.version = buffer.readUInt32BE(4);
 			this.token = buffer.readUInt32BE(8);
@@ -70,5 +83,5 @@ func Parse(buffer []byte) (m ControlMessage, err error) {
 		*/
 	}
 
-	return ControlMessage{cmd: cmd}, nil
+	return message, nil
 }

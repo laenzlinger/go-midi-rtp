@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/laenzlinger/go-midi-rtp/sip"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -10,6 +9,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/laenzlinger/go-midi-rtp/sip"
 
 	"github.com/grandcat/zeroconf"
 )
@@ -38,9 +39,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-//	00000000  ff ff 49 4e 00 00 00 02  3d 1b 58 ba 02 f8 f5 8e  |..IN....=.X.....|
-//	00000010  55 4d 30 30 38 35 36 00                           |UM00856.|
-
+	//	00000000  ff ff 49 4e 00 00 00 02  3d 1b 58 ba 02 f8 f5 8e  |..IN....=.X.....|
+	//	00000010  55 4d 30 30 38 35 36 00                           |UM00856.|
 
 	cmd, err := sip.Parse(buffer[:n])
 	if err != nil {
@@ -61,6 +61,6 @@ func main() {
 	log.Println("Shutting down.")
 }
 
-func handleMessage()  {
+func handleMessage() {
 
 }
