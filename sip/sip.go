@@ -10,7 +10,7 @@ import (
 type Command uint16
 
 const (
-	// Invitation Message is sent to invite a remote participant to the session.
+	// Invitation message is sent to invite a remote participant to the session.
 	Invitation Command = 0x494E
 	// InvitationRejected is sent to reject the invitation.
 	InvitationRejected Command = 0x4E4F
@@ -18,8 +18,12 @@ const (
 	InvitationAccepted Command = 0x4F4B
 	// End Message is sent to end the current session.
 	End                 Command = 0x4259
+	// Synchronization message is sent to synchronize the timestamps between participants.
 	Synchronization     Command = 0x434B
+	// ReceiverFeedback is sent to update the journal on the remote participant.
 	ReceiverFeedback    Command = 0x5253
+	// BitrateReceiveLimit is currently unused but defined in Wireshark
+	// see https://github.com/boundary/wireshark/blob/master/epan/dissectors/packet-applemidi.c
 	BitrateReceiveLimit Command = 0x524C
 )
 
