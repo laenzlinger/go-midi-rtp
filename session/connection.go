@@ -70,10 +70,7 @@ func (conn MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage,
 		Name: "GoZeroconf", // FIXME session name
 	}
 
-	buf := sip.Marshall(accept)
-
-
-	_, err := pc.WriteTo(buf, addr)
+	_, err := pc.WriteTo(sip.Encode(accept), addr)
 	if err != nil {
 		fmt.Println(err)
 	}

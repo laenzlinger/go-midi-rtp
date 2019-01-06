@@ -39,18 +39,16 @@ func messageLoop( port int, s MidiNetworkSession) {
 	buffer := make([]byte, 1024)
 	for {
 		n, addr, err := pc.ReadFrom(buffer)
-
 		fmt.Println(hex.Dump(buffer[:n]))
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
 
-		msg, err := sip.Parse(buffer[:n])
+		msg, err := sip.Decode(buffer[:n])
 		if err != nil {
 			fmt.Println(err)
 		}
-
 		log.Printf("received message: %v", msg)
 
 		found, conn:= s.connections.findConnection(msg.Name)

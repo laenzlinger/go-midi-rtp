@@ -46,8 +46,8 @@ type ControlMessage struct {
 	Name  string
 }
 
-// Parse a buffer into a control message
-func Parse(buffer []byte) (m ControlMessage, err error) {
+// Decode a byte buffer into a control message
+func Decode(buffer []byte) (m ControlMessage, err error) {
 	if len(buffer) < minimumBufferLengt {
 		return ControlMessage{}, fmt.Errorf("buffer is too small: %d bytes", len(buffer))
 	}
@@ -103,8 +103,8 @@ func Parse(buffer []byte) (m ControlMessage, err error) {
 	return message, nil
 }
 
-// Marshall the ControlMessage into a byte buffer.
-func Marshall(m ControlMessage) []byte {
+// Encode the ControlMessage into a byte buffer.
+func Encode(m ControlMessage) []byte {
 	b := new(bytes.Buffer)
 
 	switch m.Cmd {

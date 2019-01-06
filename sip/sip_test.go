@@ -8,15 +8,15 @@ import (
 	"github.com/go-test/deep"
 )
 
-func TestMarshall(t *testing.T) {
+func TestInvitationCodec(t *testing.T) {
 	msg := ControlMessage{
 		Cmd:   Invitation,
 		Token: 12345,
 		SSRC:  54321,
 		Name:  "foo-bar",
 	}
-	buffer := Marshall(msg)
-	actual, _ := Parse(buffer)
+	buffer := Encode(msg)
+	actual, _ := Decode(buffer)
 
 	fmt.Println(hex.Dump([]byte(msg.Name)))
 
