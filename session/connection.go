@@ -67,8 +67,8 @@ func (conn MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage,
 		Cmd: sip.InvitationAccepted,
 		Version: 2,
 		Token: msg.Token,
-		SSRC: msg.SSRC,
-		Name: "GoZeroconf",
+		SSRC: msg.SSRC, // FIXME use own session token
+		Name: "GoZeroconf", // FIXME session name
 	}
 
 	buf := sip.Marshall(accept)
