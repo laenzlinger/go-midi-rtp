@@ -40,10 +40,11 @@ const minimumBufferLengt = 4
 // see https://en.wikipedia.org/wiki/RTP-MIDI
 // see https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 type ControlMessage struct {
-	Cmd   Command
-	Token uint32
-	SSRC  uint32
-	Name  string
+	Cmd        Command
+	Token      uint32
+	SSRC       uint32
+	Name       string
+	Timestamps []uint64
 }
 
 // Decode a byte buffer into a control message
@@ -55,7 +56,7 @@ func Decode(buffer []byte) (msg ControlMessage, err error) {
 	}
 
 	h := binary.BigEndian.Uint16(buffer[0:2])
-	if  h != header {
+	if h != header {
 		err = fmt.Errorf("invalid header: %x", h)
 		return
 	}
@@ -78,6 +79,13 @@ func Decode(buffer []byte) (msg ControlMessage, err error) {
 			msg.Name = strings.TrimRight(string(buffer[16:]), "\x00")
 		}
 	case Synchronization:
+		msg.SSRC = binary.BigEndian.Uint32(buffer[4:8])
+		count := buffer[8] + 1
+		for i := byte(0); i < count; i++ {
+			ts := binary.BigEndian.Uint64(buffer[12+i*8 : 20+i*8])
+			msg.Timestamps = append(msg.Timestamps, ts)
+		}
+
 		/*
 			this.ssrc = buffer.readUInt32BE(4, 8)
 			this.count = buffer.readUInt8(8)
@@ -102,6 +110,9 @@ func Decode(buffer []byte) (msg ControlMessage, err error) {
 func Encode(m ControlMessage) []byte {
 	b := new(bytes.Buffer)
 
+	binary.Write(b, binary.BigEndian, header)
+	binary.Write(b, binary.BigEndian, m.Cmd)
+
 	switch m.Cmd {
 	case Invitation:
 		fallthrough
@@ -110,8 +121,6 @@ func Encode(m ControlMessage) []byte {
 	case InvitationRejected:
 		fallthrough
 	case End:
-		binary.Write(b, binary.BigEndian, header)
-		binary.Write(b, binary.BigEndian, m.Cmd)
 		binary.Write(b, binary.BigEndian, protocolVersion)
 		binary.Write(b, binary.BigEndian, m.Token)
 		binary.Write(b, binary.BigEndian, m.SSRC)
@@ -121,20 +130,13 @@ func Encode(m ControlMessage) []byte {
 		}
 
 	case Synchronization:
-		/*
-			buffer = new Buffer(36);
-			buffer.writeUInt16BE(this.start, 0);
-			buffer.writeUInt16BE(commandByte, 2);
-			buffer.writeUInt32BE(this.ssrc, 4);
-			buffer.writeUInt8(this.count, 8);
-			buffer.writeUInt8(this.padding >>> 0xF0, 9);
-			buffer.writeUInt16BE(this.padding & 0x00FFFF, 10);
-
-			this.timestamp1.copy(buffer, 12);
-			this.timestamp2.copy(buffer, 20);
-			this.timestamp3.copy(buffer, 28);
-		*/
-
+		binary.Write(b, binary.BigEndian, m.SSRC)
+		binary.Write(b, binary.BigEndian, byte(len(m.Timestamps)-1))
+		binary.Write(b, binary.BigEndian, byte(0x00))
+		binary.Write(b, binary.BigEndian, uint16(0x0000))
+		for _, ts := range m.Timestamps {
+			binary.Write(b, binary.BigEndian, ts)
+		}
 	case ReceiverFeedback:
 		/*
 			buffer = new Buffer(12);
@@ -159,5 +161,12 @@ func (c Command) String() string {
 }
 
 func (m ControlMessage) String() string {
+	if m.Cmd == Synchronization{
+	   res := fmt.Sprintf("%v SSRC=%x", m.Cmd, m.SSRC)
+	   for i, ts := range m.Timestamps {
+		   res = fmt.Sprintf("%v ts%d=%d", res, i, ts)
+	   }
+	   return res
+	}
 	return fmt.Sprintf("%v token=%x SSRC=%x name=[%v]", m.Cmd, m.Token, m.SSRC, m.Name)
 }

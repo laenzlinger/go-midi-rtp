@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInvitationCodec(t *testing.T) {
+func Test_Invitation_Codec(t *testing.T) {
 	// given
 	msg := ControlMessage{
 		Cmd:   Invitation,
@@ -41,4 +41,21 @@ func Test_Ignore_Name_In_End(t *testing.T) {
 	fmt.Println(hex.Dump(buffer))
 	assert.Nil(t, err)
 	assert.Equal(t, actual.Name, "")
+}
+
+func Test_Timesync_Code(t *testing.T) {
+	// given
+	msg := ControlMessage{
+		Cmd:   Synchronization,
+		Timestamps: []uint64{0x0102030405060708, 0x1112131415161718 , 0x2122232425262728},
+	}
+	// when
+	buffer := Encode(msg)
+	actual, err := Decode(buffer)
+	// then
+	fmt.Println(hex.Dump(buffer))
+	assert.Nil(t, err)
+	if diff := deep.Equal(msg, actual); diff != nil {
+		t.Error(diff)
+	}
 }
