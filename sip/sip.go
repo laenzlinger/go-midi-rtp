@@ -157,5 +157,5 @@ func (c Command) String() string {
 }
 
 func (m ControlMessage) String() string {
-	return fmt.Sprintf("%v name=%v token=%x SSRC=%x", m.Cmd, m.Name, m.Token, m.SSRC)
+	return fmt.Sprintf("%v token=%x SSRC=%x name=[%v]", m.Cmd, m.Token, m.SSRC, m.Name)
 }

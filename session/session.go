@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 
 	"github.com/laenzlinger/go-midi-rtp/sip"
@@ -22,8 +23,10 @@ type MidiNetworkSession struct {
 
 // Start is starting a new session
 func Start(bonjourName string, port uint16) (s MidiNetworkSession) {
+	ssrc := rand.Uint32()
 	s = MidiNetworkSession{
 		BonjourName: bonjourName,
+		SSRC:        ssrc,
 		Port:        port,
 	}
 

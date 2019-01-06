@@ -72,7 +72,7 @@ func (conn MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage,
 	accept := sip.ControlMessage{
 		Cmd:   sip.InvitationAccepted,
 		Token: msg.Token,
-		SSRC:  msg.SSRC, // FIXME use own session token
+		SSRC:  conn.Session.SSRC,
 		Name:  conn.Session.BonjourName,
 	}
 
