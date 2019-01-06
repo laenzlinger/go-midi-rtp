@@ -40,5 +40,5 @@ func Test_Ignore_Name_In_End(t *testing.T) {
 	// then
 	fmt.Println(hex.Dump(buffer))
 	assert.Nil(t, err)
-	assert.Equal(t, actual.Name, "g")
+	assert.Equal(t, actual.Name, "")
 }
