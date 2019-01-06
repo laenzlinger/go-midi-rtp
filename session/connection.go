@@ -2,8 +2,9 @@ package session
 
 import (
 	"fmt"
-	"github.com/laenzlinger/go-midi-rtp/sip"
 	"net"
+
+	"github.com/laenzlinger/go-midi-rtp/sip"
 )
 
 type state uint8
@@ -17,22 +18,25 @@ const (
 // MidiNetworkHost represents information about the remote
 type MidiNetworkHost struct {
 	ControlPort net.Addr
-	MidiPort net.Addr
+	MidiPort    net.Addr
 	// MDNSName used to advertise expose the remote session with multicast DNS.
-	MDNSName string
+	BonjourName string
 }
 
 // MidiNetworkConnection specifies a connection to a MIDI network host.
 type MidiNetworkConnection struct {
-	Host MidiNetworkHost
-	State state
+	Session *MidiNetworkSession
+	Host    MidiNetworkHost
+	State   state
 }
 
 // Create a new connection
-func create(msg sip.ControlMessage) *MidiNetworkConnection {
+func create(msg sip.ControlMessage, session *MidiNetworkSession) *MidiNetworkConnection {
+	host := MidiNetworkHost{BonjourName: msg.Name}
 	conn := MidiNetworkConnection{
-		Host : MidiNetworkHost{MDNSName: msg.Name},
-		State: initial,
+		Session: session,
+		Host:    host,
+		State:   initial,
 	}
 	return &conn
 }
@@ -60,14 +64,13 @@ func (conn MidiNetworkConnection) handleInvitation(msg sip.ControlMessage, pc ne
 	}
 }
 
-
 func (conn MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage, addr net.Addr, pc net.PacketConn) {
 
 	accept := sip.ControlMessage{
-		Cmd: sip.InvitationAccepted,
+		Cmd:   sip.InvitationAccepted,
 		Token: msg.Token,
-		SSRC: msg.SSRC, // FIXME use own session token
-		Name: "GoZeroconf", // FIXME session name
+		SSRC:  msg.SSRC,     // FIXME use own session token
+		Name:  conn.Session.BonjourName, 
 	}
 
 	_, err := pc.WriteTo(sip.Encode(accept), addr)
@@ -76,4 +79,4 @@ func (conn MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage,
 	}
 
 	fmt.Printf("sent: %v\n", accept)
-};
+}

@@ -14,13 +14,14 @@ import (
 
 func main() {
 	port := 6005
-	server, err := zeroconf.Register("GoZeroconf", "_apple-midi._udp", "local.", port, []string{"txtv=0", "lo=1", "la=2"}, nil)
+	bonjourName := "GoZeroconf"
+	server, err := zeroconf.Register(bonjourName, "_apple-midi._udp", "local.", port, []string{"txtv=0", "lo=1", "la=2"}, nil)
 	if err != nil {
 		panic(err)
 	}
 	defer server.Shutdown()
 
-	session.Start(port)
+	session.Start(bonjourName, port)
 
 	// Clean exit.
 	sig := make(chan os.Signal, 1)

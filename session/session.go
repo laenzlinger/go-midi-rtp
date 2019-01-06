@@ -13,15 +13,18 @@ type connections []*MidiNetworkConnection
 
 // MidiNetworkSession can offer or accept streams.
 type MidiNetworkSession struct {
-	LocalNaame     string
-	MDNSName       string
-	Port           int
-	connections    connections
+	LocalNaame  string
+	BonjourName string
+	Port        int
+	connections connections
 }
 
 // Start is starting a new session
-func Start(port int) (s MidiNetworkSession) {
-	s = MidiNetworkSession{Port: port}
+func Start(bonjourName string, port int) (s MidiNetworkSession) {
+	s = MidiNetworkSession{
+		BonjourName: bonjourName,
+		Port:        port,
+	}
 
 	go messageLoop(port, s)
 
@@ -30,7 +33,7 @@ func Start(port int) (s MidiNetworkSession) {
 	return
 }
 
-func messageLoop( port int, s MidiNetworkSession) {
+func messageLoop(port int, s MidiNetworkSession) {
 	pc, mcErr := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
 	if mcErr != nil {
 		panic(mcErr)
@@ -51,24 +54,23 @@ func messageLoop( port int, s MidiNetworkSession) {
 		}
 		log.Printf("received message: %v", msg)
 
-		found, conn:= s.connections.findConnection(msg.Name)
+		found, conn := s.connections.findConnection(msg.Name)
 		if !found {
-			conn = create(msg)
+			conn = create(msg, &s)
 			s.connections = append(s.connections, conn)
 		}
 		conn.HandleControl(msg, pc, addr)
 	}
 }
 
-
 func (c connections) findConnection(remoteName string) (found bool, conn *MidiNetworkConnection) {
 	// FIXME synchronisation issue
-	found = false;
+	found = false
 	for _, conn = range c {
 		// FIXME improve the connection identifaction
-		if conn.Host.MDNSName == remoteName {
-			return 
+		if conn.Host.BonjourName == remoteName {
+			return
 		}
-	} 
+	}
 	return
 }
