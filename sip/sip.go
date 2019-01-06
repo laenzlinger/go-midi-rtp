@@ -47,24 +47,20 @@ type ControlMessage struct {
 }
 
 // Decode a byte buffer into a control message
-func Decode(buffer []byte) (m ControlMessage, err error) {
+func Decode(buffer []byte) (msg ControlMessage, err error) {
+	msg = ControlMessage{}
 	if len(buffer) < minimumBufferLengt {
-		return ControlMessage{}, fmt.Errorf("buffer is too small: %d bytes", len(buffer))
+		err = fmt.Errorf("buffer is too small: %d bytes", len(buffer))
+		return
 	}
 
 	h := binary.BigEndian.Uint16(buffer[0:2])
-	if h != header {
-		return ControlMessage{}, fmt.Errorf("invalid header: %x", h)
+	if  h != header {
+		err = fmt.Errorf("invalid header: %x", h)
+		return
 	}
-
-	version := binary.BigEndian.Uint32(buffer[4:8])
-	if version != protocolVersion {
-		fmt.Println("Warning: Unsupported protocol version: ", version)
-	}
-
-	cmd := Command(binary.BigEndian.Uint16(buffer[2:4]))
-	message := ControlMessage{Cmd: cmd}
-	switch cmd {
+	msg.Cmd = Command(binary.BigEndian.Uint16(buffer[2:4]))
+	switch msg.Cmd {
 	case Invitation:
 		fallthrough
 	case InvitationAccepted:
@@ -72,16 +68,13 @@ func Decode(buffer []byte) (m ControlMessage, err error) {
 	case InvitationRejected:
 		fallthrough
 	case End:
-		message.Token = binary.BigEndian.Uint32(buffer[8:12])
-		message.SSRC = binary.BigEndian.Uint32(buffer[12:16])
-		message.Name = strings.TrimRight(string(buffer[16:]), "\x00")
-		/*
-			this.version = buffer.readUInt32BE(4);
-			this.token = buffer.readUInt32BE(8);
-			this.ssrc = buffer.readUInt32BE(12);
-			this.name = buffer.toString('utf-8', 16);
-			break;
-		*/
+		version := binary.BigEndian.Uint32(buffer[4:8])
+		if version != protocolVersion {
+			fmt.Println("Warning: Unsupported protocol version: ", version)
+		}
+		msg.Token = binary.BigEndian.Uint32(buffer[8:12])
+		msg.SSRC = binary.BigEndian.Uint32(buffer[12:16])
+		msg.Name = strings.TrimRight(string(buffer[16:]), "\x00")
 	case Synchronization:
 		/*
 			this.ssrc = buffer.readUInt32BE(4, 8)
@@ -100,7 +93,7 @@ func Decode(buffer []byte) (m ControlMessage, err error) {
 		*/
 	}
 
-	return message, nil
+	return
 }
 
 // Encode the ControlMessage into a byte buffer.
