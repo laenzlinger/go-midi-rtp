@@ -18,11 +18,27 @@ func TestInvitationCodec(t *testing.T) {
 		Name:  "foo-bar",
 	}
 	// when
-	actual, err := Decode(Encode(msg))
+	buffer := Encode(msg)
+	actual, err := Decode(buffer)
 	// then
-	fmt.Println(hex.Dump([]byte(msg.Name)))
+	fmt.Println(hex.Dump(buffer))
 	assert.Nil(t, err)
 	if diff := deep.Equal(msg, actual); diff != nil {
 		t.Error(diff)
 	}
+}
+
+func Test_Ignore_Name_In_End(t *testing.T) {
+	// given
+	msg := ControlMessage{
+		Cmd:   End,
+		Name:  "foo-bar",
+	}
+	// when
+	buffer := Encode(msg)
+	actual, err := Decode(buffer)
+	// then
+	fmt.Println(hex.Dump(buffer))
+	assert.Nil(t, err)
+	assert.Equal(t, actual.Name, "g")
 }

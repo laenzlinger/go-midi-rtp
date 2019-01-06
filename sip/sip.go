@@ -74,7 +74,9 @@ func Decode(buffer []byte) (msg ControlMessage, err error) {
 		}
 		msg.Token = binary.BigEndian.Uint32(buffer[8:12])
 		msg.SSRC = binary.BigEndian.Uint32(buffer[12:16])
-		msg.Name = strings.TrimRight(string(buffer[16:]), "\x00")
+		if msg.Cmd != End {
+			msg.Name = strings.TrimRight(string(buffer[16:]), "\x00")
+		}
 	case Synchronization:
 		/*
 			this.ssrc = buffer.readUInt32BE(4, 8)
@@ -113,8 +115,8 @@ func Encode(m ControlMessage) []byte {
 		binary.Write(b, binary.BigEndian, protocolVersion)
 		binary.Write(b, binary.BigEndian, m.Token)
 		binary.Write(b, binary.BigEndian, m.SSRC)
-		b.WriteString(m.Name)
 		if m.Cmd != End {
+			b.WriteString(m.Name)
 			b.WriteByte(0)
 		}
 
