@@ -23,7 +23,10 @@ const (
 	BitrateReceiveLimit Command = 0x524C
 )
 
-const header = uint16(0xffff)
+const (
+	header          = uint16(0xffff)
+	protocolVersion = uint32(2)
+)
 
 const minimumBufferLengt = 4
 
@@ -33,7 +36,6 @@ const minimumBufferLengt = 4
 // see https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 type ControlMessage struct {
 	Cmd     Command
-	Version uint32
 	Token   uint32
 	SSRC    uint32
 	Name    string
@@ -49,6 +51,12 @@ func Parse(buffer []byte) (m ControlMessage, err error) {
 	if h != header {
 		return ControlMessage{}, fmt.Errorf("invalid header: %x", h)
 	}
+	
+	version := binary.BigEndian.Uint32(buffer[4:8])
+	if (version != protocolVersion) {
+		fmt.Println("Warning: Unsupported protocol version: ", version)
+	}
+
 
 	cmd := Command(binary.BigEndian.Uint16(buffer[2:4]))
 	message := ControlMessage{Cmd: cmd}
@@ -60,7 +68,6 @@ func Parse(buffer []byte) (m ControlMessage, err error) {
 	case InvitationRejected:
 		fallthrough
 	case End:
-		message.Version = binary.BigEndian.Uint32(buffer[4:8])
 		message.Token = binary.BigEndian.Uint32(buffer[8:12])
 		message.SSRC = binary.BigEndian.Uint32(buffer[12:16])
 		message.Name = string(buffer[16:])
@@ -106,7 +113,7 @@ func Marshall(m ControlMessage) []byte {
 	case End:
 		binary.Write(b, binary.BigEndian, header)
 		binary.Write(b, binary.BigEndian, m.Cmd)
-		binary.Write(b, binary.BigEndian, m.Version)
+		binary.Write(b, binary.BigEndian, protocolVersion)
 		binary.Write(b, binary.BigEndian, m.Token)
 		binary.Write(b, binary.BigEndian, m.SSRC)
 		b.WriteString(m.Name)
@@ -153,5 +160,5 @@ func (c Command) String() string {
 }
 
 func (m ControlMessage) String() string {
-	return fmt.Sprintf("%v (%d) name=%v token=%x SSRC=%x", m.Cmd, m.Version, m.Name, m.Token, m.SSRC)
+	return fmt.Sprintf("%v name=%v token=%x SSRC=%x", m.Cmd, m.Name, m.Token, m.SSRC)
 }

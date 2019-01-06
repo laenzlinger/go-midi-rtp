@@ -37,7 +37,7 @@ func create(msg sip.ControlMessage) *MidiNetworkConnection {
 	return &conn
 }
 
-// Handle a sipControlMessage
+// HandleControl a sipControlMessage
 func (conn *MidiNetworkConnection) HandleControl(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
 	switch msg.Cmd {
 	case sip.Invitation:
