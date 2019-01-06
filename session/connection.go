@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/laenzlinger/go-midi-rtp/sip"
@@ -69,8 +70,8 @@ func (conn MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage,
 	accept := sip.ControlMessage{
 		Cmd:   sip.InvitationAccepted,
 		Token: msg.Token,
-		SSRC:  msg.SSRC,     // FIXME use own session token
-		Name:  conn.Session.BonjourName, 
+		SSRC:  msg.SSRC, // FIXME use own session token
+		Name:  conn.Session.BonjourName,
 	}
 
 	_, err := pc.WriteTo(sip.Encode(accept), addr)
@@ -78,5 +79,5 @@ func (conn MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage,
 		fmt.Println(err)
 	}
 
-	fmt.Printf("sent: %v\n", accept)
+	log.Printf("<- outgoing message: %v", accept)
 }

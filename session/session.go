@@ -52,7 +52,7 @@ func messageLoop(port int, s MidiNetworkSession) {
 		if err != nil {
 			fmt.Println(err)
 		}
-		log.Printf("received message: %v", msg)
+		log.Printf("-> incoming message: %v", msg)
 
 		found, conn := s.connections.findConnection(msg.Name)
 		if !found {
