@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	"github.com/laenzlinger/go-midi-rtp/sip"
 )
@@ -41,6 +42,8 @@ func (conn *MidiNetworkConnection) HandleControl(msg sip.ControlMessage, pc net.
 		conn.handleInvitation(msg, pc, addr)
 	case sip.End:
 		conn.handleEnd()
+	case sip.Synchronization:
+		conn.handleSynchonization(msg, pc, addr)
 	}
 }
 
@@ -72,10 +75,36 @@ func (conn *MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage
 		Name:  conn.Session.BonjourName,
 	}
 
-	_, err := pc.WriteTo(sip.Encode(accept), addr)
+	conn.sendMessage(accept, addr, pc)
+}
+
+func (conn *MidiNetworkConnection) handleSynchonization(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
+	if conn.State == ready {
+		switch len(msg.Timestamps) {
+		case 1:
+			fallthrough
+		case 2:
+			ts := uint64(time.Since(conn.Session.StartTime).Nanoseconds()/int64(100000))
+			newTs := append(msg.Timestamps, ts)
+
+			sync := sip.ControlMessage{
+				Cmd:        sip.Synchronization,
+				SSRC:       conn.Session.SSRC,
+				Timestamps: newTs,
+			}
+			conn.sendMessage(sync, addr, pc)
+		case 3:
+			// FIXME calculate offset_estimate = ((timestamp3 + timestamp1) / 2) - timestamp2
+		}
+	}
+}
+
+func (conn *MidiNetworkConnection) sendMessage(msg sip.ControlMessage, addr net.Addr, pc net.PacketConn) {
+
+	_, err := pc.WriteTo(sip.Encode(msg), addr)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	log.Printf("<- outgoing message: %v", accept)
+	log.Printf("<- outgoing message: %v", msg)
 }

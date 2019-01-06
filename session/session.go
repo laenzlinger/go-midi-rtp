@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/laenzlinger/go-midi-rtp/sip"
 )
@@ -17,16 +18,19 @@ type MidiNetworkSession struct {
 	BonjourName string
 	Port        uint16
 	SSRC        uint32
+	StartTime   time.Time
 	connections sync.Map
 }
 
 // Start is starting a new session
 func Start(bonjourName string, port uint16) (s MidiNetworkSession) {
 	ssrc := rand.Uint32()
+	startTime := time.Now()
 	s = MidiNetworkSession{
 		BonjourName: bonjourName,
 		SSRC:        ssrc,
 		Port:        port,
+		StartTime:   startTime,
 	}
 
 	go messageLoop(port, &s)
