@@ -15,12 +15,13 @@ type connections []*MidiNetworkConnection
 type MidiNetworkSession struct {
 	LocalNaame  string
 	BonjourName string
-	Port        int
+	Port        uint16
+	SSRC        uint32
 	connections connections
 }
 
 // Start is starting a new session
-func Start(bonjourName string, port int) (s MidiNetworkSession) {
+func Start(bonjourName string, port uint16) (s MidiNetworkSession) {
 	s = MidiNetworkSession{
 		BonjourName: bonjourName,
 		Port:        port,
@@ -33,7 +34,7 @@ func Start(bonjourName string, port int) (s MidiNetworkSession) {
 	return
 }
 
-func messageLoop(port int, s MidiNetworkSession) {
+func messageLoop(port uint16, s MidiNetworkSession) {
 	pc, mcErr := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
 	if mcErr != nil {
 		panic(mcErr)

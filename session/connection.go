@@ -18,7 +18,9 @@ const (
 
 // MidiNetworkHost represents information about the remote
 type MidiNetworkHost struct {
+	// ControlPort is used to exchange session control messages (IN, OK, NO, BY...)
 	ControlPort net.Addr
+	// MidiPort is ised to exchange MIDI payload and synchronisation
 	MidiPort    net.Addr
 	// MDNSName used to advertise expose the remote session with multicast DNS.
 	BonjourName string
@@ -61,7 +63,7 @@ func (conn MidiNetworkConnection) handleInvitation(msg sip.ControlMessage, pc ne
 		conn.sendInvitationAccepted(msg, addr, pc)
 		conn.State = ready
 	case ready:
-		// send NO to control port
+		// FIXME send NO to control port
 	}
 }
 

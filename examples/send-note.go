@@ -21,7 +21,7 @@ func main() {
 	}
 	defer server.Shutdown()
 
-	session.Start(bonjourName, port)
+	session.Start(bonjourName, uint16(port))
 
 	// Clean exit.
 	sig := make(chan os.Signal, 1)
