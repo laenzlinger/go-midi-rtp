@@ -1,6 +1,8 @@
 package sip
 
 import (
+	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/go-test/deep"
@@ -15,6 +17,8 @@ func TestMarshall(t *testing.T) {
 	}
 	buffer := Marshall(msg)
 	actual, _ := Parse(buffer)
+
+	fmt.Println(hex.Dump([]byte(msg.Name)))
 
 	if diff := deep.Equal(msg, actual); diff != nil {
 		t.Error(diff)

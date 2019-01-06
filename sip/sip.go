@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"strings"
 )
 
 // Command defines one of the commands defined by the apple SIP
@@ -17,11 +18,11 @@ const (
 	// InvitationAccepted is sent to accept the invitation.
 	InvitationAccepted Command = 0x4F4B
 	// End Message is sent to end the current session.
-	End                 Command = 0x4259
+	End Command = 0x4259
 	// Synchronization message is sent to synchronize the timestamps between participants.
-	Synchronization     Command = 0x434B
+	Synchronization Command = 0x434B
 	// ReceiverFeedback is sent to update the journal on the remote participant.
-	ReceiverFeedback    Command = 0x5253
+	ReceiverFeedback Command = 0x5253
 	// BitrateReceiveLimit is currently unused but defined in Wireshark
 	// see https://github.com/boundary/wireshark/blob/master/epan/dissectors/packet-applemidi.c
 	BitrateReceiveLimit Command = 0x524C
@@ -39,10 +40,10 @@ const minimumBufferLengt = 4
 // see https://en.wikipedia.org/wiki/RTP-MIDI
 // see https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 type ControlMessage struct {
-	Cmd     Command
-	Token   uint32
-	SSRC    uint32
-	Name    string
+	Cmd   Command
+	Token uint32
+	SSRC  uint32
+	Name  string
 }
 
 // Parse a buffer into a control message
@@ -55,12 +56,11 @@ func Parse(buffer []byte) (m ControlMessage, err error) {
 	if h != header {
 		return ControlMessage{}, fmt.Errorf("invalid header: %x", h)
 	}
-	
+
 	version := binary.BigEndian.Uint32(buffer[4:8])
-	if (version != protocolVersion) {
+	if version != protocolVersion {
 		fmt.Println("Warning: Unsupported protocol version: ", version)
 	}
-
 
 	cmd := Command(binary.BigEndian.Uint16(buffer[2:4]))
 	message := ControlMessage{Cmd: cmd}
@@ -74,7 +74,7 @@ func Parse(buffer []byte) (m ControlMessage, err error) {
 	case End:
 		message.Token = binary.BigEndian.Uint32(buffer[8:12])
 		message.SSRC = binary.BigEndian.Uint32(buffer[12:16])
-		message.Name = string(buffer[16:])
+		message.Name = strings.TrimRight(string(buffer[16:]), "\x00")
 		/*
 			this.version = buffer.readUInt32BE(4);
 			this.token = buffer.readUInt32BE(8);
