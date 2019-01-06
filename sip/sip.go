@@ -1,23 +1,29 @@
 package sip
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 )
 
-type command uint16
+// Command defines one of the commands defined by the apple SIP
+type Command uint16
 
 const (
-	invitation          command = 0x494E
-	invitationRejected  command = 0x4E4F
-	invitationAccepted  command = 0x4F4B
-	end                 command = 0x4259
-	synchronization     command = 0x434B
-	receiverFeedback    command = 0x5253
-	bitrateReceiveLimit command = 0x524C
+	// Invitation Message is sent to invite a remote participant to the session.
+	Invitation Command = 0x494E
+	// InvitationRejected is sent to reject the invitation.
+	InvitationRejected Command = 0x4E4F
+	// InvitationAccepted is sent to accept the invitation.
+	InvitationAccepted Command = 0x4F4B
+	// End Message is sent to end the current session.
+	End                 Command = 0x4259
+	Synchronization     Command = 0x434B
+	ReceiverFeedback    Command = 0x5253
+	BitrateReceiveLimit Command = 0x524C
 )
 
-const header = 0xffff
+const header = uint16(0xffff)
 
 const minimumBufferLengt = 4
 
@@ -26,11 +32,11 @@ const minimumBufferLengt = 4
 // see https://en.wikipedia.org/wiki/RTP-MIDI
 // see https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 type ControlMessage struct {
-	Cmd command
+	Cmd     Command
 	Version uint32
-	Token uint32
-	SSRC uint32
-	Name string
+	Token   uint32
+	SSRC    uint32
+	Name    string
 }
 
 // Parse a buffer into a control message
@@ -44,16 +50,16 @@ func Parse(buffer []byte) (m ControlMessage, err error) {
 		return ControlMessage{}, fmt.Errorf("invalid header: %x", h)
 	}
 
-	cmd := command(binary.BigEndian.Uint16(buffer[2:4]))
+	cmd := Command(binary.BigEndian.Uint16(buffer[2:4]))
 	message := ControlMessage{Cmd: cmd}
 	switch cmd {
-	case invitation:
+	case Invitation:
 		fallthrough
-	case invitationAccepted:
+	case InvitationAccepted:
 		fallthrough
-	case invitationRejected:
+	case InvitationRejected:
 		fallthrough
-	case end:
+	case End:
 		message.Version = binary.BigEndian.Uint32(buffer[4:8])
 		message.Token = binary.BigEndian.Uint32(buffer[8:12])
 		message.SSRC = binary.BigEndian.Uint32(buffer[12:16])
@@ -65,7 +71,7 @@ func Parse(buffer []byte) (m ControlMessage, err error) {
 			this.name = buffer.toString('utf-8', 16);
 			break;
 		*/
-	case synchronization:
+	case Synchronization:
 		/*
 			this.ssrc = buffer.readUInt32BE(4, 8)
 			this.count = buffer.readUInt8(8)
@@ -75,7 +81,7 @@ func Parse(buffer []byte) (m ControlMessage, err error) {
 			this.timestamp3 = buffer.slice(28, 36) //[buffer.readUInt32BE(28), buffer.readUInt32BE(32)];
 			break
 		*/
-	case receiverFeedback:
+	case ReceiverFeedback:
 		/*
 			this.ssrc = buffer.readUInt32BE(4, 8)
 			this.sequenceNumber = buffer.readUInt16BE(8)
@@ -84,4 +90,68 @@ func Parse(buffer []byte) (m ControlMessage, err error) {
 	}
 
 	return message, nil
+}
+
+// Marshall the ControlMessage into a byte buffer.
+func Marshall(m ControlMessage) []byte {
+	b := new(bytes.Buffer)
+
+	switch m.Cmd {
+	case Invitation:
+		fallthrough
+	case InvitationAccepted:
+		fallthrough
+	case InvitationRejected:
+		fallthrough
+	case End:
+		binary.Write(b, binary.BigEndian, header)
+		binary.Write(b, binary.BigEndian, m.Cmd)
+		binary.Write(b, binary.BigEndian, m.Version)
+		binary.Write(b, binary.BigEndian, m.Token)
+		binary.Write(b, binary.BigEndian, m.SSRC)
+		b.WriteString(m.Name)
+		if m.Cmd != End {
+			b.WriteByte(0)
+		}
+
+	case Synchronization:
+		/*
+			buffer = new Buffer(36);
+			buffer.writeUInt16BE(this.start, 0);
+			buffer.writeUInt16BE(commandByte, 2);
+			buffer.writeUInt32BE(this.ssrc, 4);
+			buffer.writeUInt8(this.count, 8);
+			buffer.writeUInt8(this.padding >>> 0xF0, 9);
+			buffer.writeUInt16BE(this.padding & 0x00FFFF, 10);
+
+			this.timestamp1.copy(buffer, 12);
+			this.timestamp2.copy(buffer, 20);
+			this.timestamp3.copy(buffer, 28);
+		*/
+
+	case ReceiverFeedback:
+		/*
+			buffer = new Buffer(12);
+			buffer.writeUInt16BE(this.start, 0);
+			buffer.writeUInt16BE(commandByte, 2);
+			buffer.writeUInt32BE(this.ssrc, 4);
+			buffer.writeUInt16BE(this.sequenceNumber, 8);
+
+		*/
+	default:
+		//		assert.fail('Not a valid command: "' + this.command + '"');
+
+	}
+
+	return b.Bytes()
+}
+
+func (c Command) String() string {
+	buffer := make([]byte, 2)
+	binary.BigEndian.PutUint16(buffer, uint16(c))
+	return string(buffer)
+}
+
+func (m ControlMessage) String() string {
+	return fmt.Sprintf("%v (%d) name=%v token=%x SSRC=%x", m.Cmd, m.Version, m.Name, m.Token, m.SSRC)
 }
