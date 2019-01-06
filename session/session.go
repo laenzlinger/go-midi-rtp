@@ -64,6 +64,7 @@ func messageLoop( port int, s MidiNetworkSession) {
 
 
 func (c connections) findConnection(remoteName string) (found bool, conn *MidiNetworkConnection) {
+	// FIXME synchronisation issue
 	found = false;
 	for _, conn = range c {
 		// FIXME improve the connection identifaction
