@@ -21,27 +21,17 @@ type MidiNetworkHost struct {
 	// ControlPort is used to exchange session control messages (IN, OK, NO, BY...)
 	ControlPort net.Addr
 	// MidiPort is ised to exchange MIDI payload and synchronisation
-	MidiPort    net.Addr
+	MidiPort net.Addr
 	// MDNSName used to advertise expose the remote session with multicast DNS.
 	BonjourName string
 }
 
 // MidiNetworkConnection specifies a connection to a MIDI network host.
 type MidiNetworkConnection struct {
-	Session *MidiNetworkSession
-	Host    MidiNetworkHost
-	State   state
-}
-
-// Create a new connection
-func create(msg sip.ControlMessage, session *MidiNetworkSession) *MidiNetworkConnection {
-	host := MidiNetworkHost{BonjourName: msg.Name}
-	conn := MidiNetworkConnection{
-		Session: session,
-		Host:    host,
-		State:   initial,
-	}
-	return &conn
+	Session    *MidiNetworkSession
+	Host       MidiNetworkHost
+	RemoteSSRC uint32
+	State      state
 }
 
 // HandleControl a sipControlMessage
@@ -49,10 +39,12 @@ func (conn *MidiNetworkConnection) HandleControl(msg sip.ControlMessage, pc net.
 	switch msg.Cmd {
 	case sip.Invitation:
 		conn.handleInvitation(msg, pc, addr)
+	case sip.End:
+		conn.handleEnd()
 	}
 }
 
-func (conn MidiNetworkConnection) handleInvitation(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
+func (conn *MidiNetworkConnection) handleInvitation(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
 	switch conn.State {
 	case initial:
 		conn.Host.ControlPort = addr
@@ -67,7 +59,11 @@ func (conn MidiNetworkConnection) handleInvitation(msg sip.ControlMessage, pc ne
 	}
 }
 
-func (conn MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage, addr net.Addr, pc net.PacketConn) {
+func (conn *MidiNetworkConnection) handleEnd() {
+	conn.Session.removeConnection(conn)
+}
+
+func (conn *MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage, addr net.Addr, pc net.PacketConn) {
 
 	accept := sip.ControlMessage{
 		Cmd:   sip.InvitationAccepted,

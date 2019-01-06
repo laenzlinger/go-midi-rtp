@@ -6,11 +6,10 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"sync"
 
 	"github.com/laenzlinger/go-midi-rtp/sip"
 )
-
-type connections []*MidiNetworkConnection
 
 // MidiNetworkSession can offer or accept streams.
 type MidiNetworkSession struct {
@@ -18,7 +17,7 @@ type MidiNetworkSession struct {
 	BonjourName string
 	Port        uint16
 	SSRC        uint32
-	connections connections
+	connections sync.Map
 }
 
 // Start is starting a new session
@@ -30,14 +29,19 @@ func Start(bonjourName string, port uint16) (s MidiNetworkSession) {
 		Port:        port,
 	}
 
-	go messageLoop(port, s)
+	go messageLoop(port, &s)
 
-	go messageLoop(port+1, s)
+	go messageLoop(port+1, &s)
 
 	return
 }
 
-func messageLoop(port uint16, s MidiNetworkSession) {
+// End is ending a session
+func (s *MidiNetworkSession) End() {
+	// FIXME to be implemented.
+}
+
+func messageLoop(port uint16, s *MidiNetworkSession) {
 	pc, mcErr := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
 	if mcErr != nil {
 		panic(mcErr)
@@ -58,23 +62,31 @@ func messageLoop(port uint16, s MidiNetworkSession) {
 		}
 		log.Printf("-> incoming message: %v", msg)
 
-		found, conn := s.connections.findConnection(msg.Name)
-		if !found {
-			conn = create(msg, &s)
-			s.connections = append(s.connections, conn)
-		}
-		conn.HandleControl(msg, pc, addr)
+		s.getConnection(msg).HandleControl(msg, pc, addr)
 	}
 }
 
-func (c connections) findConnection(remoteName string) (found bool, conn *MidiNetworkConnection) {
-	// FIXME synchronisation issue
-	found = false
-	for _, conn = range c {
-		// FIXME improve the connection identifaction
-		if conn.Host.BonjourName == remoteName {
-			return
-		}
+func (s *MidiNetworkSession) getConnection(msg sip.ControlMessage) *MidiNetworkConnection {
+	// FIXME optimize to only create a session for IN message
+	conn, found := s.connections.LoadOrStore(msg.SSRC, s.createConnection(msg))
+	if !found {
+		log.Printf("New connection requested from remote participant SSRC [%x]", msg.SSRC)
 	}
-	return
+	return conn.(*MidiNetworkConnection)
+}
+
+func (s *MidiNetworkSession) removeConnection(conn *MidiNetworkConnection) {
+	log.Printf("Connection ended by remote participant SSRC [%x]", conn.RemoteSSRC)
+	s.connections.Delete(conn.RemoteSSRC)
+}
+
+func (s *MidiNetworkSession) createConnection(msg sip.ControlMessage) *MidiNetworkConnection {
+	host := MidiNetworkHost{BonjourName: msg.Name}
+	conn := MidiNetworkConnection{
+		Session:    s,
+		Host:       host,
+		RemoteSSRC: msg.SSRC,
+		State:      initial,
+	}
+	return &conn
 }
