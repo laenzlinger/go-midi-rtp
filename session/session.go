@@ -23,26 +23,29 @@ type MidiNetworkSession struct {
 }
 
 // Start is starting a new session
-func Start(bonjourName string, port uint16) (s MidiNetworkSession) {
+func Start(bonjourName string, port uint16) (s *MidiNetworkSession) {
 	ssrc := rand.Uint32()
 	startTime := time.Now()
-	s = MidiNetworkSession{
+	session := MidiNetworkSession{
 		BonjourName: bonjourName,
 		SSRC:        ssrc,
 		Port:        port,
 		StartTime:   startTime,
 	}
 
-	go messageLoop(port, &s)
+	go messageLoop(port, &session)
 
-	go messageLoop(port+1, &s)
+	go messageLoop(port+1, &session)
 
-	return
+	return &session
 }
 
 // End is ending a session
 func (s *MidiNetworkSession) End() {
-	// FIXME to be implemented.
+	s.connections.Range(func(k, v interface{}) bool {
+		v.(*MidiNetworkConnection).End()
+		return true
+	})
 }
 
 func messageLoop(port uint16, s *MidiNetworkSession) {

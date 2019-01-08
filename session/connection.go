@@ -47,6 +47,13 @@ func (conn *MidiNetworkConnection) HandleControl(msg sip.ControlMessage, pc net.
 	}
 }
 
+// End the session
+func (conn *MidiNetworkConnection) End() {
+	// FIXME what to do now?
+	log.Println("Ending connedtion")	
+}
+
+
 func (conn *MidiNetworkConnection) handleInvitation(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
 	switch conn.State {
 	case initial:
