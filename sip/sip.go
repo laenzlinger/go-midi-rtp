@@ -85,16 +85,6 @@ func Decode(buffer []byte) (msg ControlMessage, err error) {
 			ts := binary.BigEndian.Uint64(buffer[12+i*8 : 20+i*8])
 			msg.Timestamps = append(msg.Timestamps, ts)
 		}
-
-		/*
-			this.ssrc = buffer.readUInt32BE(4, 8)
-			this.count = buffer.readUInt8(8)
-			this.padding = (buffer.readUInt8(9) << 0xF0) + buffer.readUInt16BE(10)
-			this.timestamp1 = buffer.slice(12, 20) //[buffer.readUInt32BE(12), buffer.readUInt32BE(16)];
-			this.timestamp2 = buffer.slice(20, 28) //[buffer.readUInt32BE(20), buffer.readUInt32BE(24)];
-			this.timestamp3 = buffer.slice(28, 36) //[buffer.readUInt32BE(28), buffer.readUInt32BE(32)];
-			break
-		*/
 	case ReceiverFeedback:
 		/*
 			this.ssrc = buffer.readUInt32BE(4, 8)
@@ -146,9 +136,6 @@ func Encode(m ControlMessage) []byte {
 			buffer.writeUInt16BE(this.sequenceNumber, 8);
 
 		*/
-	default:
-		//		assert.fail('Not a valid command: "' + this.command + '"');
-
 	}
 
 	return b.Bytes()
