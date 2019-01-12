@@ -66,6 +66,7 @@ func messageLoop(port uint16, s *MidiNetworkSession) {
 		msg, err := sip.Decode(buffer[:n])
 		if err != nil {
 			fmt.Println(err)
+			continue
 		}
 		log.Printf("-> incoming message: %v", msg)
 
