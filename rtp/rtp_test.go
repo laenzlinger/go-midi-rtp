@@ -32,6 +32,16 @@ func Test_encode_of_message(t *testing.T) {
 	}, b)
 }
 
+/*
+note on
+00000000  80 61 98 78 2f 0f 1d c5  7e 33 a0 24 43 90 3c 40  |.a.x/...~3.$C.<@|
+00000010  20 98 72 00 06 08 00 77  08                       | .r....w.|
+
+note off
+00000000  80 61 98 79 2f 0f 24 92  7e 33 a0 24 43 80 3c 00  |.a.y/.$.~3.$C.<.|
+00000010  20 98 72 00 07 08 81 f1  3c 40                    | .r.....<@|
+*/
+
 func Test_encode_of_empty_commands(t *testing.T) {
 	// given
 	m := MIDICommands{}
