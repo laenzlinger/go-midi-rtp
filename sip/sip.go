@@ -35,7 +35,7 @@ const (
 
 const minimumBufferLengt = 4
 
-// ControlMessage represents the Apple MIDI control messages.ControlMessage
+// ControlMessage represents the Apple MIDI ControlMessage
 //
 // see https://en.wikipedia.org/wiki/RTP-MIDI
 // see https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
@@ -47,7 +47,7 @@ type ControlMessage struct {
 	Timestamps []uint64
 }
 
-// Decode a byte buffer into a control message
+// Decode a byte buffer into a ControlMessage
 func Decode(buffer []byte) (msg ControlMessage, err error) {
 	msg = ControlMessage{}
 	if len(buffer) < minimumBufferLengt {

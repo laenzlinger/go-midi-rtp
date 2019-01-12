@@ -1,6 +1,9 @@
 # RTP-MIDI implementation in go
 
-The final goal is to provide a [RTP-MIDI](https://en.wikipedia.org/wiki/RTP-MIDI) (aka Apple Midi) implemation in go.
+The final goal is to provide a [RTP-MIDI](https://en.wikipedia.org/wiki/RTP-MIDI) implemation in go.
+
+The implementation is currently only tested with the Apple MIDI Network Driver and is restricted to 
+Apple's specific session initiation protocol.
 
 This work is inspired and based on the the following open source code:
 
