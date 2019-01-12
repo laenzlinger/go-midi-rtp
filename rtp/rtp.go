@@ -20,23 +20,33 @@ const (
 // RTP-MIDI constants
 const (
 	minimumBufferLengt = 12
-	padding            = 0x00
-	extension          = 0x00
-	cc                 = 0x00
-	marker             = markerBit
-	payloadType        = 0x61
+)
+
+const (
+	padding   = 0x00
+	extension = 0x00
+	ccBits    = 0x00
+	firstByte = version2Bit | padding | extension | ccBits
+)
+
+const (
+	marker      = markerBit
+	payloadType = 0x61
+	secondByte  = marker | payloadType
 )
 
 // MIDIMessage represents a MIDI package exchanged over RTP.
-// 
+//
 // The implementation is tested only with Apple MIDI Network Driver.
-// 
+//
 // see https://en.wikipedia.org/wiki/RTP-MIDI
 // see https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 // see https://tools.ietf.org/html/rfc6295
 type MIDIMessage struct {
-	SequenceNumber uint32
+	SequenceNumber uint16
+	Timestamp	   uint32	
 	SSRC           uint32
+
 }
 
 // Decode a byte buffer into a MIDIMessage
@@ -52,11 +62,17 @@ func Decode(buffer []byte) (msg MIDIMessage, err error) {
 
 // Encode the MIDIMessage into a byte buffer.
 func Encode(m MIDIMessage) []byte {
+
 	b := new(bytes.Buffer)
 
-	// FIXME implement encoder
-	binary.Write(b, binary.BigEndian, 0x00)
+	binary.Write(b, binary.BigEndian, firstByte)
+	binary.Write(b, binary.BigEndian, secondByte)
+	binary.Write(b, binary.BigEndian, m.SequenceNumber)
+	binary.Write(b, binary.BigEndian, m.Timestamp)
+	binary.Write(b, binary.BigEndian, m.SSRC)
 
+	// FIXME encode midi commands
+	
 	return b.Bytes()
 }
 
