@@ -97,7 +97,7 @@ func Decode(buffer []byte) (msg ControlMessage, err error) {
 }
 
 // Encode the ControlMessage into a byte buffer.
-func Encode(m ControlMessage) []byte {
+func Encode(m ControlMessage) (buf []byte, err error) {
 	b := new(bytes.Buffer)
 
 	binary.Write(b, binary.BigEndian, header)
@@ -120,11 +120,20 @@ func Encode(m ControlMessage) []byte {
 		}
 
 	case Synchronization:
+		if len(m.Timestamps) < 1 {
+			return []byte{}, fmt.Errorf("At least 1 timestamp is expected")
+		}
 		binary.Write(b, binary.BigEndian, m.SSRC)
 		binary.Write(b, binary.BigEndian, byte(len(m.Timestamps)-1))
 		binary.Write(b, binary.BigEndian, byte(0x00))
 		binary.Write(b, binary.BigEndian, uint16(0x0000))
-		for _, ts := range m.Timestamps {
+		for i := 0; i < 3; i++ {
+			var ts uint64
+			if i < len(m.Timestamps) {
+				ts = m.Timestamps[i]
+			} else {
+                ts = 0
+			}
 			binary.Write(b, binary.BigEndian, ts)
 		}
 	case ReceiverFeedback:
@@ -138,7 +147,7 @@ func Encode(m ControlMessage) []byte {
 		*/
 	}
 
-	return b.Bytes()
+	return b.Bytes(), nil
 }
 
 func (c Command) String() string {
@@ -148,12 +157,12 @@ func (c Command) String() string {
 }
 
 func (m ControlMessage) String() string {
-	if m.Cmd == Synchronization{
-	   res := fmt.Sprintf("%v SSRC=%x", m.Cmd, m.SSRC)
-	   for i, ts := range m.Timestamps {
-		   res = fmt.Sprintf("%v ts%d=%d", res, i, ts)
-	   }
-	   return res
+	if m.Cmd == Synchronization {
+		res := fmt.Sprintf("%v SSRC=%x", m.Cmd, m.SSRC)
+		for i, ts := range m.Timestamps {
+			res = fmt.Sprintf("%v ts%d=%d", res, i, ts)
+		}
+		return res
 	}
 	return fmt.Sprintf("%v token=%x SSRC=%x name=[%v]", m.Cmd, m.Token, m.SSRC, m.Name)
 }

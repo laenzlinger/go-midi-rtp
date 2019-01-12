@@ -121,10 +121,15 @@ func (conn *MidiNetworkConnection) handleSynchonization(msg sip.ControlMessage, 
 }
 
 func (conn *MidiNetworkConnection) sendMessage(msg sip.ControlMessage, addr net.Addr, pc net.PacketConn) {
-
-	_, err := pc.WriteTo(sip.Encode(msg), addr)
+	buff, err := sip.Encode(msg)
 	if err != nil {
 		fmt.Println(err)
+		return
+	}
+	_, err = pc.WriteTo(buff, addr)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 
 	log.Printf("<- outgoing message: %v", msg)
