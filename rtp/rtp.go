@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
+	"time"
 )
 
 // Generic RTP constants
@@ -42,11 +44,44 @@ const (
 // see https://en.wikipedia.org/wiki/RTP-MIDI
 // see https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 // see https://tools.ietf.org/html/rfc6295
+/*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      | V |P|X|  CC   |M|     PT      |        Sequence number        |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                           Timestamp                           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                             SSRC                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                     MIDI command section ...                  |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                       Journal section ...                     |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+*/
 type MIDIMessage struct {
 	SequenceNumber uint16
-	Timestamp	   uint32	
 	SSRC           uint32
+	Commands       MIDICommands
+}
 
+// MIDICommands the list of MIDICommand sent inside a MIDIMessage
+type MIDICommands struct {
+	Timestamp time.Time
+	Commands  []MIDICommand
+}
+
+// MIDIPayload contains the MIDI payload to be sent.
+type MIDIPayload []byte
+
+// MIDICommand represents a single command containing a DeltaTime and the Payload
+type MIDICommand struct {
+	DeltaTime time.Duration
+	Payload   MIDIPayload
 }
 
 // Decode a byte buffer into a MIDIMessage
@@ -65,17 +100,67 @@ func Encode(m MIDIMessage) []byte {
 
 	b := new(bytes.Buffer)
 
-	binary.Write(b, binary.BigEndian, firstByte)
-	binary.Write(b, binary.BigEndian, secondByte)
+	b.WriteByte(firstByte)
+	b.WriteByte(secondByte)
 	binary.Write(b, binary.BigEndian, m.SequenceNumber)
-	binary.Write(b, binary.BigEndian, m.Timestamp)
+	// FIXME encode timestamp
+	binary.Write(b, binary.BigEndian, uint32(0))
 	binary.Write(b, binary.BigEndian, m.SSRC)
 
-	// FIXME encode midi commands
-	
+	m.Commands.encode(b)
+
 	return b.Bytes()
 }
 
 func (m MIDIMessage) String() string {
 	return fmt.Sprintf("sn=%x SSRC=%x", m.SequenceNumber, m.SSRC)
+}
+
+// 0                   1                   2                   3
+// 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |B|J|Z|P|LEN... |  MIDI list ...                                |
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+const (
+	emtpyHeader   = byte(0x00)
+	bigMessageBit = 0x80
+	journalBit    = 0x40
+	zeroDeltaBit  = 0x20
+	phantomBit    = 0x10
+	lenMask       = 0x0f
+)
+
+func (mcs MIDICommands) encode(w io.Writer) {
+	if len(mcs.Commands) == 0 {
+		w.Write([]byte{emtpyHeader})
+		return
+	}
+	header := emtpyHeader
+	b := new(bytes.Buffer)
+	if len(mcs.Commands) == 1 {
+		mc := mcs.Commands[0]
+		if mc.DeltaTime == 0 && len(mc.Payload) > 0 {
+			header = header | zeroDeltaBit
+			mc.Payload.encode(b)
+		} 
+
+		// FIXME handle message with delta time
+		
+	}
+
+	// FIXME handle multiple commands
+
+	// FIXME handle messages with size > 15 octets
+	header = header | (byte(b.Len()) & lenMask)
+
+	binary.Write(w, binary.BigEndian, header)
+	w.Write(b.Bytes())
+}
+
+func (p MIDIPayload) encode(w io.Writer) {
+	// FIXME maybe this encoding is not correct
+	if len(p) == 0 {
+		return
+	}
+	w.Write(p)
 }
