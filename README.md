@@ -11,3 +11,5 @@ This work is inspired and based on the the following open source code:
 * [node-rtpmidi](https://github.com/jdachtera/node-rtpmidi)
 
 The project depends on [zeroconf](https://github.com/grandcat/zeroconf) to support service discovery with mDSN
+
+WARNING: THIS IMPLEMENTATION IS INCOMPLETE AND WORK IN PROGRESS
