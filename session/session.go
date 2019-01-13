@@ -19,19 +19,19 @@ type MIDINetworkSession struct {
 	BonjourName string
 	Port        uint16
 	SSRC        uint32
+	SequenceNumber uint16
 	StartTime   time.Time
 	connections sync.Map
 }
 
 // Start is starting a new session
 func Start(bonjourName string, port uint16) (s *MIDINetworkSession) {
-	ssrc := rand.Uint32()
-	startTime := time.Now()
 	session := MIDINetworkSession{
 		BonjourName: bonjourName,
-		SSRC:        ssrc,
+		SSRC:        rand.Uint32(),
 		Port:        port,
-		StartTime:   startTime,
+		StartTime:   time.Now(),
+		SequenceNumber: uint16(rand.Int()),
 	}
 
 	go messageLoop(port, &session)
@@ -51,8 +51,9 @@ func (s *MIDINetworkSession) End() {
 
 // SendMIDIMessage sends the MIDI payload immediately to all MIDINetworkConnections
 func (s *MIDINetworkSession) SendMIDIMessage(payload []byte) {
+	s.SequenceNumber++
 	m := rtp.MIDIMessage{
-		SequenceNumber: 1, // FIXME use random and increase for each message
+		SequenceNumber: s.SequenceNumber,
 		SSRC:           s.SSRC,
 		Commands: rtp.MIDICommands{
 			Timestamp: time.Now(),
@@ -74,7 +75,6 @@ func messageLoop(port uint16, s *MIDINetworkSession) {
 	buffer := make([]byte, 1024)
 	for {
 		n, addr, err := pc.ReadFrom(buffer)
-		fmt.Println(hex.Dump(buffer[:n]))
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -83,6 +83,7 @@ func messageLoop(port uint16, s *MIDINetworkSession) {
 		msg, err := sip.Decode(buffer[:n])
 		if err != nil {
 			fmt.Println(err)
+			fmt.Println(hex.Dump(buffer[:n]))
 			continue
 		}
 		log.Printf("-> incoming message: %v", msg)
