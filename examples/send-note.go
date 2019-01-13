@@ -25,6 +25,9 @@ func main() {
 	s := session.Start(bonjourName, uint16(port))
 
 	msg := make(chan rune, 1)
+	sig := make(chan os.Signal, 1)
+
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
 		for {
@@ -37,16 +40,17 @@ func main() {
 
 	}()
 
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
-	select {
-	case <-sig:
-		s.End()
-	case <-msg:
-		s.SendMIDIMessage([]byte{0x90, 0x3c, 0x40})
-		s.End()
+	run := true
+	for run {
+		select {
+		case <-sig:
+			run = false
+		case <-msg:
+			s.SendMIDIMessage([]byte{0x90, 0x3c, 0x40})
+		}	
 	}
 
 	log.Println("Shutting down.")
+	s.End()
 
 }

@@ -157,12 +157,17 @@ func (c Command) String() string {
 }
 
 func (m ControlMessage) String() string {
-	if m.Cmd == Synchronization {
-		res := fmt.Sprintf("%v SSRC=%x", m.Cmd, m.SSRC)
+	var result string
+	switch m.Cmd {
+	case Synchronization:
+		result = fmt.Sprintf("%v SSRC=%x", m.Cmd, m.SSRC)
 		for i, ts := range m.Timestamps {
-			res = fmt.Sprintf("%v ts%d=%d", res, i, ts)
+			result = fmt.Sprintf("%v ts%d=%d", result, i, ts)
 		}
-		return res
+	case End:
+		result = fmt.Sprintf("%v token=%x SSRC=%x", m.Cmd, m.Token, m.SSRC)
+	default:
+		result = fmt.Sprintf("%v token=%x SSRC=%x name=[%v]", m.Cmd, m.Token, m.SSRC, m.Name)
 	}
-	return fmt.Sprintf("%v token=%x SSRC=%x name=[%v]", m.Cmd, m.Token, m.SSRC, m.Name)
+	return result
 }
