@@ -52,7 +52,7 @@ func main() {
 				Timestamp: time.Now(),
 				Commands:  []rtp.MIDICommand{
 					{Payload: []byte{0x96, 0x3c, 0x7f}},
-					{Payload: []byte{0x86, 0x3c, 0x00}, DeltaTime: 10*time.Millisecond},
+					{Payload: []byte{0x86, 0x3c, 0x00}, DeltaTime: time.Second},
 				},
 			}
 

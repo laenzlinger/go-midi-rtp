@@ -1,7 +1,6 @@
 package timestamp
 
 import (
-	"encoding/binary"
 	"io"
 	"time"
 )
@@ -26,11 +25,53 @@ func Of(t time.Time, start time.Time) Timestamp {
 }
 
 // EncodeDeltaTime writes the encoded delta time onto the writer
+/*
+   One-Octet Delta Time:
+
+      Encoded form: 0ddddddd
+      Decoded form: 00000000 00000000 00000000 0ddddddd
+
+   Two-Octet Delta Time:
+
+      Encoded form: 1ccccccc 0ddddddd
+      Decoded form: 00000000 00000000 00cccccc cddddddd
+
+   Three-Octet Delta Time:
+
+      Encoded form: 1bbbbbbb 1ccccccc 0ddddddd
+      Decoded form: 00000000 000bbbbb bbcccccc cddddddd
+
+   Four-Octet Delta Time:
+
+      Encoded form: 1aaaaaaa 1bbbbbbb 1ccccccc 0ddddddd
+      Decoded form: 0000aaaa aaabbbbb bbcccccc cddddddd
+
+*/
 func EncodeDeltaTime(reference time.Time, start time.Time, delta time.Duration, w io.Writer) {
 
-	ticks := Of(reference.Add(delta), start).Uint64() - Of(reference, start).Uint64()
-	// FIXME correctly handle higher values
-	binary.Write(w, binary.BigEndian, byte(ticks))
+	ticks := Of(reference.Add(delta), start).Uint32() - Of(reference, start).Uint32()
+	if ticks >= 0x10000000 {
+		// FIXME pass through the error up to the client
+		// send the highest possible value
+		w.Write([]byte{0xff, 0xff, 0xff, 0x8f})
+	} else if ticks >= 0x200000 {
+		low := byte(ticks & 0x7f)
+		byte2 := byte((ticks >> 7) | 0x80)
+		byte3 := byte((ticks >> 14) | 0x80)
+		high := byte((ticks >> 21) | 0x80)
+		w.Write([]byte{high, byte3, byte2, low})
+	} else if ticks >= 0x4000 {
+		low := byte(ticks & 0x7f)
+		middle := byte((ticks >> 7) | 0x80)
+		high := byte((ticks >> 14) | 0x80)
+		w.Write([]byte{high, middle, low})
+	} else if ticks >= 0x80 {
+		low := byte(ticks & 0x7f)
+		high := byte((ticks >> 7) | 0x80)
+		w.Write([]byte{high, low})
+	} else {
+		w.Write([]byte{byte(ticks)})
+	}
 
 }
 
