@@ -28,7 +28,7 @@ func Test_encode_of_message(t *testing.T) {
 		0x80, 0xe1, 0xaa, 0xbb, // Header | Sequence Number
 		0x00, 0x00, 0x00, 0x00, // Timestamp
 		0xcc, 0xdd, 0xee, 0xff, // SRCC
-		0x23, 0x90, 0x3c, 0x40, // MIDI Commands
+		0x03, 0x90, 0x3c, 0x40, // MIDI Commands
 	}, b)
 }
 
@@ -87,9 +87,9 @@ func Test_encode_of_single_command_without_delta(t *testing.T) {
 	      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	      |B|J|Z|P|LEN... |  MIDI list ...                                |
 		  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	      |0|0|1|0|0 0 1 1|      0x90          0x3c          0x40         |
+	      |0|0|0|0|0 0 1 1|      0x90          0x3c          0x40         |
 		  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 	*/
-	assert.Equal(t, []byte{0x23, 0x90, 0x3c, 0x40}, b.Bytes())
+	assert.Equal(t, []byte{0x03, 0x90, 0x3c, 0x40}, b.Bytes())
 }

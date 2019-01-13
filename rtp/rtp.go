@@ -45,22 +45,22 @@ const (
 // see https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 // see https://tools.ietf.org/html/rfc6295
 /*
-       0                   1                   2                   3
-       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      | V |P|X|  CC   |M|     PT      |        Sequence number        |
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      |                           Timestamp                           |
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      |                             SSRC                              |
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | V |P|X|  CC   |M|     PT      |        Sequence number        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           Timestamp                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             SSRC                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      |                     MIDI command section ...                  |
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      |                       Journal section ...                     |
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                     MIDI command section ...                  |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                       Journal section ...                     |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 */
 type MIDIMessage struct {
@@ -122,12 +122,12 @@ func (m MIDIMessage) String() string {
 // |B|J|Z|P|LEN... |  MIDI list ...                                |
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 const (
-	emtpyHeader   = byte(0x00)
-	bigMessageBit = 0x80
-	journalBit    = 0x40
-	zeroDeltaBit  = 0x20
-	phantomBit    = 0x10
-	lenMask       = 0x0f
+	emtpyHeader  = byte(0x00)
+	bigHeaderBit = 0x80 // Big Header: 2 octets
+	journalBit   = 0x40 // Journal persent
+	zeroDeltaBit = 0x20 // DeltaTime present for first MIDI command
+	phantomBit   = 0x10 // Status byte was not present in original MIDI command
+	lenMask      = 0x0f // Mask for the length information
 )
 
 func (mcs MIDICommands) encode(w io.Writer) {
@@ -140,12 +140,11 @@ func (mcs MIDICommands) encode(w io.Writer) {
 	if len(mcs.Commands) == 1 {
 		mc := mcs.Commands[0]
 		if mc.DeltaTime == 0 && len(mc.Payload) > 0 {
-			header = header | zeroDeltaBit
 			mc.Payload.encode(b)
-		} 
+		}
 
 		// FIXME handle message with delta time
-		
+
 	}
 
 	// FIXME handle multiple commands
