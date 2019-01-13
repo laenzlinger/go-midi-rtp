@@ -1,12 +1,13 @@
 package rtp
 
 import (
-	"github.com/laenzlinger/go-midi-rtp/timestamp"
 	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
 	"time"
+
+	"github.com/laenzlinger/go-midi-rtp/timestamp"
 )
 
 // Generic RTP constants
@@ -108,7 +109,7 @@ func Encode(m MIDIMessage, start time.Time) []byte {
 	binary.Write(b, binary.BigEndian, uint32(ts))
 	binary.Write(b, binary.BigEndian, m.SSRC)
 
-	m.Commands.encode(b)
+	m.Commands.encode(b, start)
 
 	return b.Bytes()
 }
@@ -131,21 +132,23 @@ const (
 	lenMask      = 0x0f // Mask for the length information
 )
 
-func (mcs MIDICommands) encode(w io.Writer) {
+func (mcs MIDICommands) encode(w io.Writer, start time.Time) {
 	if len(mcs.Commands) == 0 {
 		w.Write([]byte{emtpyHeader})
 		return
 	}
 	header := emtpyHeader
 	b := new(bytes.Buffer)
-	if len(mcs.Commands) == 1 {
-		mc := mcs.Commands[0]
-		if mc.DeltaTime == 0 && len(mc.Payload) > 0 {
-			mc.Payload.encode(b)
+
+	for i, mc := range mcs.Commands {
+		if i == 0 && mc.DeltaTime > 0 {
+			header = header | zeroDeltaBit
+			timestamp.EncodeDeltaTime(mcs.Timestamp, start, mc.DeltaTime, b)
 		}
-
-		// FIXME handle message with delta time
-
+		if i > 0 {
+			timestamp.EncodeDeltaTime(mcs.Timestamp, start, mc.DeltaTime, b)
+		}
+		mc.Payload.encode(b)
 	}
 
 	// FIXME handle multiple commands

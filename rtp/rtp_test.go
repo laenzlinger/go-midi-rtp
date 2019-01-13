@@ -33,22 +33,12 @@ func Test_encode_of_message(t *testing.T) {
 	}, b)
 }
 
-/*
-note on
-00000000  80 61 98 78 2f 0f 1d c5  7e 33 a0 24 43 90 3c 40  |.a.x/...~3.$C.<@|
-00000010  20 98 72 00 06 08 00 77  08                       | .r....w.|
-
-note off
-00000000  80 61 98 79 2f 0f 24 92  7e 33 a0 24 43 80 3c 00  |.a.y/.$.~3.$C.<.|
-00000010  20 98 72 00 07 08 81 f1  3c 40                    | .r.....<@|
-*/
-
 func Test_encode_of_empty_commands(t *testing.T) {
 	// given
 	m := MIDICommands{}
 	b := new(bytes.Buffer)
 	// when
-	m.encode(b)
+	m.encode(b, time.Now())
 	/* then
 
 	           0                   1                   2                   3
@@ -69,7 +59,7 @@ func Test_encode_of_empty_command(t *testing.T) {
 	c := MIDICommand{}
 	mcs := MIDICommands{Commands: []MIDICommand{c}}
 	// when
-	mcs.encode(b)
+	mcs.encode(b, time.Now())
 	//then
 	assert.Equal(t, []byte{0x00}, b.Bytes())
 }
@@ -80,7 +70,7 @@ func Test_encode_of_single_command_without_delta(t *testing.T) {
 	c := MIDICommand{Payload: []byte{0x90, 0x3c, 0x40}}
 	mcs := MIDICommands{Commands: []MIDICommand{c}}
 	// when
-	mcs.encode(b)
+	mcs.encode(b, time.Now())
 	/* then
 
 	           0                   1                   2                   3
@@ -93,6 +83,55 @@ func Test_encode_of_single_command_without_delta(t *testing.T) {
 
 	*/
 	assert.Equal(t, []byte{
-		0x03, 0x90, 0x3c, 0x40}, b.Bytes(),
-	)
+		0x03,             // Header
+		0x90, 0x3c, 0x40, // Midi command
+	}, b.Bytes())
+}
+
+func Test_encode_of_single_command_with_delta(t *testing.T) {
+	// given
+	now := time.Now()
+	b := new(bytes.Buffer)
+	c := MIDICommand{
+		Payload:   []byte{0x90, 0x3c, 0x40},
+		DeltaTime: 10 * time.Millisecond,
+	}
+	mcs := MIDICommands{
+		Commands:  []MIDICommand{c},
+		Timestamp: now,
+	}
+	// when
+	mcs.encode(b, now)
+	// then
+	assert.Equal(t, []byte{
+		0x24,             // Header
+		0x64,             // Single Byte Delta Time
+		0x90, 0x3c, 0x40, // MIDI command
+	}, b.Bytes())
+}
+
+func Test_encode_of_mulitple_commands(t *testing.T) {
+	// given
+	now := time.Now()
+	b := new(bytes.Buffer)
+	on := MIDICommand{
+		Payload: []byte{0x90, 0x3c, 0x40},
+	}
+	off := MIDICommand{
+		Payload:   []byte{0x80, 0x3c, 0x00},
+		DeltaTime: 10 * time.Millisecond,
+	}
+	mcs := MIDICommands{
+		Commands:  []MIDICommand{on, off},
+		Timestamp: now,
+	}
+	// when
+	mcs.encode(b, now)
+	// then
+	assert.Equal(t, []byte{
+		0x07,             // Header
+		0x90, 0x3c, 0x40, // MIDI command (note on)
+		064,              // Delta time (100 ticks)
+		0x80, 0x3c, 0x00, // MIDI command (note off)
+	}, b.Bytes())
 }

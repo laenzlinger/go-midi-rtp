@@ -49,16 +49,22 @@ func (s *MIDINetworkSession) End() {
 	})
 }
 
-// SendMIDIMessage sends the MIDI payload immediately to all MIDINetworkConnections
-func (s *MIDINetworkSession) SendMIDIMessage(payload []byte) {
+// SendMIDIPayload sends the MIDI payload immediately to all MIDINetworkConnections
+func (s *MIDINetworkSession) SendMIDIPayload(payload []byte) {
+	mcs := rtp.MIDICommands{
+		Timestamp: time.Now(),
+		Commands:  []rtp.MIDICommand{{Payload: payload}},
+	}
+	s.SendMIDICommands(mcs)
+}
+
+// SendMIDICommands sends the commands to all MIDINetworkConnections
+func (s *MIDINetworkSession) SendMIDICommands(mcs rtp.MIDICommands) {
 	s.SequenceNumber++
 	m := rtp.MIDIMessage{
 		SequenceNumber: s.SequenceNumber,
 		SSRC:           s.SSRC,
-		Commands: rtp.MIDICommands{
-			Timestamp: time.Now(),
-			Commands:  []rtp.MIDICommand{{Payload: payload}},
-		},
+		Commands:       mcs,
 	}
 	s.connections.Range(func(k, v interface{}) bool {
 		v.(*MIDINetworkConnection).SendMIDIMessage(m)
@@ -100,13 +106,13 @@ func (s *MIDINetworkSession) getConnection(msg sip.ControlMessage) (c *MIDINetwo
 		log.Printf("New connection requested from remote participant SSRC [%x]", msg.SSRC)
 		conn, found := s.connections.LoadOrStore(msg.SSRC, s.createConnection(msg))
 		if found {
-			log.Printf("Connections was already established to SSRC [%x]", msg.SSRC)		
+			log.Printf("Connections was already established to SSRC [%x]", msg.SSRC)
 		}
 		return conn.(*MIDINetworkConnection), true
 	}
 	conn, found := s.connections.Load(msg.SSRC)
 	if !found {
-		log.Printf("Connection to SSRC [%x] not found", msg.SSRC)		
+		log.Printf("Connection to SSRC [%x] not found", msg.SSRC)
 		return nil, false
 	}
 	return conn.(*MIDINetworkConnection), found

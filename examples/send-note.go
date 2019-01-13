@@ -7,7 +7,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/laenzlinger/go-midi-rtp/rtp"
 	"github.com/laenzlinger/go-midi-rtp/session"
 
 	"github.com/grandcat/zeroconf"
@@ -46,8 +48,16 @@ func main() {
 		case <-sig:
 			run = false
 		case <-msg:
-			s.SendMIDIMessage([]byte{0x96, 0x3c, 0x7f})
-		}	
+			mcs := rtp.MIDICommands{
+				Timestamp: time.Now(),
+				Commands:  []rtp.MIDICommand{
+					{Payload: []byte{0x96, 0x3c, 0x7f}},
+					{Payload: []byte{0x86, 0x3c, 0x00}, DeltaTime: 10*time.Millisecond},
+				},
+			}
+
+			s.SendMIDICommands(mcs)
+		}
 	}
 
 	log.Println("Shutting down.")

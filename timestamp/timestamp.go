@@ -1,6 +1,10 @@
 package timestamp
 
-import "time"
+import (
+	"encoding/binary"
+	"io"
+	"time"
+)
 
 const (
 	nanoSecond  = 1
@@ -19,6 +23,15 @@ func Now(start time.Time) Timestamp {
 // Of returns the Timestam of the given time
 func Of(t time.Time, start time.Time) Timestamp {
 	return Timestamp(t.Sub(start).Nanoseconds() / int64(rate))
+}
+
+// EncodeDeltaTime writes the encoded delta time onto the writer
+func EncodeDeltaTime(reference time.Time, start time.Time, delta time.Duration, w io.Writer) {
+
+	ticks := Of(reference.Add(delta), start).Uint64() - Of(reference, start).Uint64()
+	// FIXME correctly handle higher values
+	binary.Write(w, binary.BigEndian, byte(ticks))
+
 }
 
 // Uint64 returns the long representation of the Timesteamp
