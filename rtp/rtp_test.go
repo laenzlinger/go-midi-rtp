@@ -14,7 +14,7 @@ func Test_encode_of_message(t *testing.T) {
 	c := MIDICommand{Payload: []byte{0x90, 0x3c, 0x40}}
 	mcs := MIDICommands{
 		Commands:  []MIDICommand{c},
-		Timestamp: start.Add(100*time.Microsecond),
+		Timestamp: start.Add(100 * time.Microsecond),
 	}
 	m := MIDIMessage{
 		SequenceNumber: 0xaabb,
@@ -56,8 +56,8 @@ func Test_encode_of_empty_commands(t *testing.T) {
 	      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	      |B|J|Z|P|LEN... |  MIDI list ...                                |
 		  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	      |0|0|0|0|0 0 0 0|                                               |
-		  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	      |0|0|0|0|0 0 0 0|
+		  +-+-+-+-+-+-+-+-+
 
 	*/
 	assert.Equal(t, []byte{0x00}, b.Bytes())
@@ -92,5 +92,7 @@ func Test_encode_of_single_command_without_delta(t *testing.T) {
 		  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 	*/
-	assert.Equal(t, []byte{0x03, 0x90, 0x3c, 0x40}, b.Bytes())
+	assert.Equal(t, []byte{
+		0x03, 0x90, 0x3c, 0x40}, b.Bytes(),
+	)
 }
