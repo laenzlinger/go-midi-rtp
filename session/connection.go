@@ -18,28 +18,28 @@ const (
 	ready
 )
 
-// MidiNetworkHost represents information about the remote
-type MidiNetworkHost struct {
+// MIDINetworkHost represents information about the remote
+type MIDINetworkHost struct {
 	// ControlPort is used to exchange session control messages (IN, OK, NO, BY...)
 	ControlAddr net.Addr
 	ControlPc   net.PacketConn
-	// MidiPort is ised to exchange MIDI payload and synchronisation
-	MidiAddr net.Addr
-	MidiPc   net.PacketConn
+	// MIDIPort is ised to exchange MIDI payload and synchronisation
+	MIDIAddr net.Addr
+	MIDIPc   net.PacketConn
 	// MDNSName used to advertise expose the remote session with multicast DNS.
 	BonjourName string
 }
 
-// MidiNetworkConnection specifies a connection to a MIDI network host.
-type MidiNetworkConnection struct {
-	Session    *MidiNetworkSession
-	Host       MidiNetworkHost
+// MIDINetworkConnection specifies a connection to a MIDI network host.
+type MIDINetworkConnection struct {
+	Session    *MIDINetworkSession
+	Host       MIDINetworkHost
 	RemoteSSRC uint32
 	State      state
 }
 
 // HandleControl a sipControlMessage
-func (conn *MidiNetworkConnection) HandleControl(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
+func (conn *MIDINetworkConnection) HandleControl(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
 	switch msg.Cmd {
 	case sip.Invitation:
 		conn.handleInvitation(msg, pc, addr)
@@ -51,13 +51,13 @@ func (conn *MidiNetworkConnection) HandleControl(msg sip.ControlMessage, pc net.
 }
 
 // End the session
-func (conn *MidiNetworkConnection) End() {
+func (conn *MIDINetworkConnection) End() {
 	// FIXME what to do now?
 	log.Println("Ending connedtion")
 	conn.sendConnectionEnd(conn.Host.ControlAddr, conn.Host.ControlPc)
 }
 
-func (conn *MidiNetworkConnection) handleInvitation(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
+func (conn *MIDINetworkConnection) handleInvitation(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
 	switch conn.State {
 	case initial:
 		conn.Host.ControlAddr = addr
@@ -65,8 +65,8 @@ func (conn *MidiNetworkConnection) handleInvitation(msg sip.ControlMessage, pc n
 		conn.sendInvitationAccepted(msg, addr, pc)
 		conn.State = controlChannelEstablished
 	case controlChannelEstablished:
-		conn.Host.MidiAddr = addr
-		conn.Host.MidiPc = pc
+		conn.Host.MIDIAddr = addr
+		conn.Host.MIDIPc = pc
 		conn.sendInvitationAccepted(msg, addr, pc)
 		conn.State = ready
 	case ready:
@@ -74,11 +74,11 @@ func (conn *MidiNetworkConnection) handleInvitation(msg sip.ControlMessage, pc n
 	}
 }
 
-func (conn *MidiNetworkConnection) handleEnd() {
+func (conn *MIDINetworkConnection) handleEnd() {
 	conn.Session.removeConnection(conn)
 }
 
-func (conn *MidiNetworkConnection) sendConnectionEnd(addr net.Addr, pc net.PacketConn) {
+func (conn *MIDINetworkConnection) sendConnectionEnd(addr net.Addr, pc net.PacketConn) {
 
 	end := sip.ControlMessage{
 		Cmd:  sip.End,
@@ -88,7 +88,7 @@ func (conn *MidiNetworkConnection) sendConnectionEnd(addr net.Addr, pc net.Packe
 	conn.sendControlMessage(end, addr, pc)
 }
 
-func (conn *MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage, addr net.Addr, pc net.PacketConn) {
+func (conn *MIDINetworkConnection) sendInvitationAccepted(msg sip.ControlMessage, addr net.Addr, pc net.PacketConn) {
 
 	accept := sip.ControlMessage{
 		Cmd:   sip.InvitationAccepted,
@@ -100,7 +100,7 @@ func (conn *MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage
 	conn.sendControlMessage(accept, addr, pc)
 }
 
-func (conn *MidiNetworkConnection) handleSynchonization(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
+func (conn *MIDINetworkConnection) handleSynchonization(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
 	if conn.State == ready {
 		switch len(msg.Timestamps) {
 		case 1:
@@ -121,7 +121,7 @@ func (conn *MidiNetworkConnection) handleSynchonization(msg sip.ControlMessage, 
 	}
 }
 
-func (conn *MidiNetworkConnection) sendControlMessage(msg sip.ControlMessage, addr net.Addr, pc net.PacketConn) {
+func (conn *MIDINetworkConnection) sendControlMessage(msg sip.ControlMessage, addr net.Addr, pc net.PacketConn) {
 	buff, err := sip.Encode(msg)
 	if err != nil {
 		fmt.Println(err)
@@ -137,10 +137,10 @@ func (conn *MidiNetworkConnection) sendControlMessage(msg sip.ControlMessage, ad
 }
 
 // SendMIDIMessage sends to given MIDIMessage over the RTP-MIDI data port.
-func (conn *MidiNetworkConnection) SendMIDIMessage(msg rtp.MIDIMessage) {
+func (conn *MIDINetworkConnection) SendMIDIMessage(msg rtp.MIDIMessage) {
 	buff := rtp.Encode(msg)
 
-	_, err := conn.Host.MidiPc.WriteTo(buff, conn.Host.MidiAddr)
+	_, err := conn.Host.MIDIPc.WriteTo(buff, conn.Host.MIDIAddr)
 	if err != nil {
 		fmt.Println(err)
 		return
