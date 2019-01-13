@@ -38,8 +38,27 @@ type MIDINetworkConnection struct {
 	State      state
 }
 
+// End the session
+func (conn *MIDINetworkConnection) End() {
+	log.Println("Ending connedtion")
+	conn.sendConnectionEnd(conn.Host.ControlAddr, conn.Host.ControlPc)
+}
+
+// SendMIDIMessage sends to given MIDIMessage over the RTP-MIDI data port.
+func (conn *MIDINetworkConnection) SendMIDIMessage(msg rtp.MIDIMessage) {
+	buff := rtp.Encode(msg)
+
+	_, err := conn.Host.MIDIPc.WriteTo(buff, conn.Host.MIDIAddr)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	log.Printf("<- outgoing payload: %v", msg)
+}
+
 // HandleControl a sipControlMessage
-func (conn *MIDINetworkConnection) HandleControl(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
+func (conn *MIDINetworkConnection) handleControl(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
 	switch msg.Cmd {
 	case sip.Invitation:
 		conn.handleInvitation(msg, pc, addr)
@@ -48,13 +67,6 @@ func (conn *MIDINetworkConnection) HandleControl(msg sip.ControlMessage, pc net.
 	case sip.Synchronization:
 		conn.handleSynchonization(msg, pc, addr)
 	}
-}
-
-// End the session
-func (conn *MIDINetworkConnection) End() {
-	// FIXME what to do now?
-	log.Println("Ending connedtion")
-	conn.sendConnectionEnd(conn.Host.ControlAddr, conn.Host.ControlPc)
 }
 
 func (conn *MIDINetworkConnection) handleInvitation(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
@@ -134,17 +146,4 @@ func (conn *MIDINetworkConnection) sendControlMessage(msg sip.ControlMessage, ad
 	}
 
 	log.Printf("<- outgoing message: %v", msg)
-}
-
-// SendMIDIMessage sends to given MIDIMessage over the RTP-MIDI data port.
-func (conn *MIDINetworkConnection) SendMIDIMessage(msg rtp.MIDIMessage) {
-	buff := rtp.Encode(msg)
-
-	_, err := conn.Host.MIDIPc.WriteTo(buff, conn.Host.MIDIAddr)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	log.Printf("<- outgoing payload: %v", msg)
 }

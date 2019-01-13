@@ -49,7 +49,7 @@ func (s *MIDINetworkSession) End() {
 	})
 }
 
-// SendMessage sends the MIDI payload immediately to all MIDINetworkConnections
+// SendMIDIMessage sends the MIDI payload immediately to all MIDINetworkConnections
 func (s *MIDINetworkSession) SendMIDIMessage(payload []byte) {
 	m := rtp.MIDIMessage{
 		SequenceNumber: 1, // FIXME use random and increase for each message
@@ -87,7 +87,7 @@ func messageLoop(port uint16, s *MIDINetworkSession) {
 		}
 		log.Printf("-> incoming message: %v", msg)
 
-		s.getConnection(msg).HandleControl(msg, pc, addr)
+		s.getConnection(msg).handleControl(msg, pc, addr)
 	}
 }
 
