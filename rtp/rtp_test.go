@@ -131,7 +131,7 @@ func Test_encode_of_mulitple_commands(t *testing.T) {
 	assert.Equal(t, []byte{
 		0x07,             // Header
 		0x90, 0x3c, 0x40, // MIDI command (note on)
-		064,              // Delta time (100 ticks)
+		0x64,             // Delta time (100 ticks)
 		0x80, 0x3c, 0x00, // MIDI command (note off)
 	}, b.Bytes())
 }
