@@ -80,5 +80,5 @@ func (ts Timestamp) Uint64() uint64 {
 
 // Uint32 returns the short representation of the Timesteamp
 func (ts Timestamp) Uint32() uint32 {
-	return uint32(ts) & 0xffffffff
+	return uint32(ts)
 }
