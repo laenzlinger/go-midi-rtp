@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/laenzlinger/go-midi-rtp/rtp"
 	"github.com/laenzlinger/go-midi-rtp/sip"
 )
 
@@ -31,10 +32,10 @@ type MidiNetworkHost struct {
 
 // MidiNetworkConnection specifies a connection to a MIDI network host.
 type MidiNetworkConnection struct {
-	Session        *MidiNetworkSession
-	Host           MidiNetworkHost
-	RemoteSSRC     uint32
-	State          state
+	Session    *MidiNetworkSession
+	Host       MidiNetworkHost
+	RemoteSSRC uint32
+	State      state
 }
 
 // HandleControl a sipControlMessage
@@ -84,7 +85,7 @@ func (conn *MidiNetworkConnection) sendConnectionEnd(addr net.Addr, pc net.Packe
 		SSRC: conn.Session.SSRC,
 	}
 
-	conn.sendMessage(end, addr, pc)
+	conn.sendControlMessage(end, addr, pc)
 }
 
 func (conn *MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage, addr net.Addr, pc net.PacketConn) {
@@ -96,7 +97,7 @@ func (conn *MidiNetworkConnection) sendInvitationAccepted(msg sip.ControlMessage
 		Name:  conn.Session.BonjourName,
 	}
 
-	conn.sendMessage(accept, addr, pc)
+	conn.sendControlMessage(accept, addr, pc)
 }
 
 func (conn *MidiNetworkConnection) handleSynchonization(msg sip.ControlMessage, pc net.PacketConn, addr net.Addr) {
@@ -113,14 +114,14 @@ func (conn *MidiNetworkConnection) handleSynchonization(msg sip.ControlMessage, 
 				SSRC:       conn.Session.SSRC,
 				Timestamps: newTs,
 			}
-			conn.sendMessage(sync, addr, pc)
+			conn.sendControlMessage(sync, addr, pc)
 		case 3:
 			// FIXME calculate offset_estimate = ((timestamp3 + timestamp1) / 2) - timestamp2
 		}
 	}
 }
 
-func (conn *MidiNetworkConnection) sendMessage(msg sip.ControlMessage, addr net.Addr, pc net.PacketConn) {
+func (conn *MidiNetworkConnection) sendControlMessage(msg sip.ControlMessage, addr net.Addr, pc net.PacketConn) {
 	buff, err := sip.Encode(msg)
 	if err != nil {
 		fmt.Println(err)
@@ -133,4 +134,17 @@ func (conn *MidiNetworkConnection) sendMessage(msg sip.ControlMessage, addr net.
 	}
 
 	log.Printf("<- outgoing message: %v", msg)
+}
+
+// SendMIDIMessage sends to given MIDIMessage over the RTP-MIDI data port.
+func (conn *MidiNetworkConnection) SendMIDIMessage(msg rtp.MIDIMessage) {
+	buff := rtp.Encode(msg)
+
+	_, err := conn.Host.MidiPc.WriteTo(buff, conn.Host.MidiAddr)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	log.Printf("<- outgoing payload: %v", msg)
 }

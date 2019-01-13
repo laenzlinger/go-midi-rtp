@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -22,11 +24,26 @@ func main() {
 
 	s := session.Start(bonjourName, uint16(port))
 
-	// Clean exit.
+	msg := make(chan rune, 1)
+	go func() {
+		reader := bufio.NewReader(os.Stdin)
+		for {
+			char, _, err := reader.ReadRune()
+			if err != nil {
+				fmt.Println(err)
+			}
+			msg <- char
+		}
+
+	}()
+
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 	select {
 	case <-sig:
+		s.End()
+	case <-msg:
+		s.SendMIDIMessage([]byte{0x90, 0x3c, 0x40})
 		s.End()
 	}
 

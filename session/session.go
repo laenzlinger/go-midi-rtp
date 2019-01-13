@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/laenzlinger/go-midi-rtp/rtp"
 	"github.com/laenzlinger/go-midi-rtp/sip"
 )
 
@@ -44,6 +45,22 @@ func Start(bonjourName string, port uint16) (s *MidiNetworkSession) {
 func (s *MidiNetworkSession) End() {
 	s.connections.Range(func(k, v interface{}) bool {
 		v.(*MidiNetworkConnection).End()
+		return true
+	})
+}
+
+// SendMessage sends the MIDI payload immediately to all MidiNetworkConnections
+func (s *MidiNetworkSession) SendMIDIMessage(payload []byte) {
+	m := rtp.MIDIMessage{
+		SequenceNumber: 1, // FIXME use random and increase for each message
+		SSRC:           s.SSRC,
+		Commands: rtp.MIDICommands{
+			Timestamp: time.Now(),
+			Commands:  []rtp.MIDICommand{{Payload: payload}},
+		},
+	}
+	s.connections.Range(func(k, v interface{}) bool {
+		v.(*MidiNetworkConnection).SendMIDIMessage(m)
 		return true
 	})
 }
