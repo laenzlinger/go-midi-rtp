@@ -46,7 +46,7 @@ func main() {
 		case <-sig:
 			run = false
 		case <-msg:
-			s.SendMIDIMessage([]byte{0x90, 0x3c, 0x40})
+			s.SendMIDIMessage([]byte{0x96, 0x3c, 0x7f})
 		}	
 	}
 

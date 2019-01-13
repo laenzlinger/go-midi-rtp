@@ -7,6 +7,7 @@ import (
 
 	"github.com/laenzlinger/go-midi-rtp/rtp"
 	"github.com/laenzlinger/go-midi-rtp/sip"
+	"github.com/laenzlinger/go-midi-rtp/timestamp"
 )
 
 type state uint8
@@ -45,7 +46,7 @@ func (conn *MIDINetworkConnection) End() {
 
 // SendMIDIMessage sends to given MIDIMessage over the RTP-MIDI data port.
 func (conn *MIDINetworkConnection) SendMIDIMessage(msg rtp.MIDIMessage) {
-	buff := rtp.Encode(msg)
+	buff := rtp.Encode(msg, conn.Session.StartTime)
 
 	_, err := conn.Host.MIDIPc.WriteTo(buff, conn.Host.MIDIAddr)
 	if err != nil {
@@ -117,7 +118,7 @@ func (conn *MIDINetworkConnection) handleSynchonization(msg sip.ControlMessage, 
 		case 1:
 			fallthrough
 		case 2:
-			ts := conn.Session.now().Uint64()
+			ts := timestamp.Now(conn.Session.StartTime).Uint64()
 			newTs := append(msg.Timestamps, ts)
 
 			sync := sip.ControlMessage{

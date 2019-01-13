@@ -10,10 +10,11 @@ import (
 
 func Test_encode_of_message(t *testing.T) {
 	// given
+	start := time.Now()
 	c := MIDICommand{Payload: []byte{0x90, 0x3c, 0x40}}
 	mcs := MIDICommands{
 		Commands:  []MIDICommand{c},
-		Timestamp: time.Now(),
+		Timestamp: start.Add(100*time.Microsecond),
 	}
 	m := MIDIMessage{
 		SequenceNumber: 0xaabb,
@@ -22,11 +23,11 @@ func Test_encode_of_message(t *testing.T) {
 	}
 
 	// when
-	b := Encode(m)
+	b := Encode(m, start)
 	// then
 	assert.Equal(t, []byte{
-		0x80, 0xe1, 0xaa, 0xbb, // Header | Sequence Number
-		0x00, 0x00, 0x00, 0x00, // Timestamp
+		0x80, 0x61, 0xaa, 0xbb, // Header | Sequence Number
+		0x00, 0x00, 0x00, 0x01, // Timestamp
 		0xcc, 0xdd, 0xee, 0xff, // SRCC
 		0x03, 0x90, 0x3c, 0x40, // MIDI Commands
 	}, b)

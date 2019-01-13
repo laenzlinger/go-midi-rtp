@@ -1,6 +1,7 @@
 package rtp
 
 import (
+	"github.com/laenzlinger/go-midi-rtp/timestamp"
 	"bytes"
 	"encoding/binary"
 	"fmt"
@@ -34,7 +35,7 @@ const (
 const (
 	marker      = markerBit
 	payloadType = 0x61
-	secondByte  = marker | payloadType
+	secondByte  = payloadType
 )
 
 // MIDIMessage represents a MIDI package exchanged over RTP.
@@ -96,15 +97,15 @@ func Decode(buffer []byte) (msg MIDIMessage, err error) {
 }
 
 // Encode the MIDIMessage into a byte buffer.
-func Encode(m MIDIMessage) []byte {
+func Encode(m MIDIMessage, start time.Time) []byte {
 
 	b := new(bytes.Buffer)
 
 	b.WriteByte(firstByte)
 	b.WriteByte(secondByte)
 	binary.Write(b, binary.BigEndian, m.SequenceNumber)
-	// FIXME encode timestamp
-	binary.Write(b, binary.BigEndian, uint32(0))
+	ts := timestamp.Of(m.Commands.Timestamp, start).Uint32()
+	binary.Write(b, binary.BigEndian, uint32(ts))
 	binary.Write(b, binary.BigEndian, m.SSRC)
 
 	m.Commands.encode(b)
