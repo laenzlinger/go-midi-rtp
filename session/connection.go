@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
 
 	"github.com/laenzlinger/go-midi-rtp/rtp"
 	"github.com/laenzlinger/go-midi-rtp/sip"
@@ -118,7 +117,7 @@ func (conn *MIDINetworkConnection) handleSynchonization(msg sip.ControlMessage, 
 		case 1:
 			fallthrough
 		case 2:
-			ts := uint64(time.Since(conn.Session.StartTime).Nanoseconds() / int64(100000))
+			ts := conn.Session.now().Uint64()
 			newTs := append(msg.Timestamps, ts)
 
 			sync := sip.ControlMessage{
