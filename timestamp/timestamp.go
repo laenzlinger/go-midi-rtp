@@ -6,9 +6,7 @@ import (
 )
 
 const (
-	nanoSecond  = 1
-	milliSecond = 1000 * nanoSecond
-	rate        = 100 * milliSecond
+	rate = 100 * time.Microsecond
 )
 
 // Timestamp is used for control messages or MIDI messages to define the relative session time.
