@@ -118,3 +118,26 @@ func Test_Timesync_Encoding_Without_Timestamp_is_wrong(t *testing.T) {
 	// then
 	assert.Error(t, err)
 }
+
+func Test_ReceiverFeedback_Codec(t *testing.T) {
+	// given
+	msg := ControlMessage{
+		Cmd:            ReceiverFeedback,
+		SSRC:           0xaaaaaaaa,
+		SequenceNumber: 0xbbbbbbbb,
+	}
+	// when
+	buffer, err := Encode(msg)
+	actual, err := Decode(buffer)
+	// then
+	fmt.Println(hex.Dump(buffer))
+	assert.Nil(t, err)
+	if diff := deep.Equal(msg, actual); diff != nil {
+		t.Error(diff)
+	}
+	assert.Equal(t, []byte{
+		0xff, 0xff, 0x52, 0x53, // header | cmd (RS)
+		0xaa, 0xaa, 0xaa, 0xaa, // SSRC
+		0xbb, 0xbb, 0xbb, 0xbb, // Sequence number
+	}, buffer)
+}

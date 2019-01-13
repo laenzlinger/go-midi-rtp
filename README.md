@@ -19,10 +19,9 @@ WARNING: THIS IMPLEMENTATION IS INCOMPLETE AND WORK IN PROGRESS
 The implementation is planned to continue with the following tasks
 
 ## Act as session listener
-* Decode receiver feedbak
+* Support mulitple commands in one message
 * Support journal
 * Support receiving midi payload
-* Support mulitple commands in one message
 
 ## Act as session initiator
 * initiate a new connection to a remote session

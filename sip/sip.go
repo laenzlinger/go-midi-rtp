@@ -40,11 +40,12 @@ const minimumBufferLengt = 4
 // see https://en.wikipedia.org/wiki/RTP-MIDI
 // see https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 type ControlMessage struct {
-	Cmd        Command
-	Token      uint32
-	SSRC       uint32
-	Name       string
-	Timestamps []uint64
+	Cmd            Command
+	Token          uint32
+	SSRC           uint32
+	Name           string
+	Timestamps     []uint64
+	SequenceNumber uint32
 }
 
 // Decode a byte buffer into a ControlMessage
@@ -57,7 +58,7 @@ func Decode(buffer []byte) (msg ControlMessage, err error) {
 
 	h := binary.BigEndian.Uint16(buffer[0:2])
 	if h != header {
-		err = fmt.Errorf("invalid header: %x", h)
+		err = fmt.Errorf("Unsupported header: %x", h)
 		return
 	}
 	msg.Cmd = Command(binary.BigEndian.Uint16(buffer[2:4]))
@@ -86,11 +87,8 @@ func Decode(buffer []byte) (msg ControlMessage, err error) {
 			msg.Timestamps = append(msg.Timestamps, ts)
 		}
 	case ReceiverFeedback:
-		/*
-			this.ssrc = buffer.readUInt32BE(4, 8)
-			this.sequenceNumber = buffer.readUInt16BE(8)
-			break
-		*/
+		msg.SSRC = binary.BigEndian.Uint32(buffer[4:8])
+		msg.SequenceNumber = binary.BigEndian.Uint32(buffer[8:12])
 	}
 
 	return
@@ -132,19 +130,13 @@ func Encode(m ControlMessage) (buf []byte, err error) {
 			if i < len(m.Timestamps) {
 				ts = m.Timestamps[i]
 			} else {
-                ts = 0
+				ts = 0
 			}
 			binary.Write(b, binary.BigEndian, ts)
 		}
 	case ReceiverFeedback:
-		/*
-			buffer = new Buffer(12);
-			buffer.writeUInt16BE(this.start, 0);
-			buffer.writeUInt16BE(commandByte, 2);
-			buffer.writeUInt32BE(this.ssrc, 4);
-			buffer.writeUInt16BE(this.sequenceNumber, 8);
-
-		*/
+		binary.Write(b, binary.BigEndian, m.SSRC)
+		binary.Write(b, binary.BigEndian, m.SequenceNumber)
 	}
 
 	return b.Bytes(), nil
@@ -160,14 +152,16 @@ func (m ControlMessage) String() string {
 	var result string
 	switch m.Cmd {
 	case Synchronization:
-		result = fmt.Sprintf("%v SSRC=%x", m.Cmd, m.SSRC)
+		result = fmt.Sprintf("%v SSRC=0x%x", m.Cmd, m.SSRC)
 		for i, ts := range m.Timestamps {
 			result = fmt.Sprintf("%v ts%d=%d", result, i, ts)
 		}
 	case End:
-		result = fmt.Sprintf("%v token=%x SSRC=%x", m.Cmd, m.Token, m.SSRC)
+		result = fmt.Sprintf("%v token=0x%x SSRC=0x%x", m.Cmd, m.Token, m.SSRC)
+	case ReceiverFeedback:
+		result = fmt.Sprintf("%v SSRC=0x%x sn=%d", m.Cmd, m.SSRC, m.SequenceNumber)
 	default:
-		result = fmt.Sprintf("%v token=%x SSRC=%x name=[%v]", m.Cmd, m.Token, m.SSRC, m.Name)
+		result = fmt.Sprintf("%v token=0x%x SSRC=0x%x name=[%v]", m.Cmd, m.Token, m.SSRC, m.Name)
 	}
 	return result
 }

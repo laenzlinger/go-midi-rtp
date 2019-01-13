@@ -114,7 +114,7 @@ func Encode(m MIDIMessage, start time.Time) []byte {
 }
 
 func (m MIDIMessage) String() string {
-	return fmt.Sprintf("sn=%x SSRC=%x", m.SequenceNumber, m.SSRC)
+	return fmt.Sprintf("RM SSRC=0x%x sn=%d", m.SSRC, m.SequenceNumber)
 }
 
 // 0                   1                   2                   3
