@@ -15,22 +15,22 @@ import (
 
 // MIDINetworkSession can offer or accept streams.
 type MIDINetworkSession struct {
-	LocalNaame  string
-	BonjourName string
-	Port        uint16
-	SSRC        uint32
+	LocalNaame     string
+	BonjourName    string
+	Port           uint16
+	SSRC           uint32
 	SequenceNumber uint16
-	StartTime   time.Time
-	connections sync.Map
+	StartTime      time.Time
+	connections    sync.Map
 }
 
 // Start is starting a new session
 func Start(bonjourName string, port uint16) (s *MIDINetworkSession) {
 	session := MIDINetworkSession{
-		BonjourName: bonjourName,
-		SSRC:        rand.Uint32(),
-		Port:        port,
-		StartTime:   time.Now(),
+		BonjourName:    bonjourName,
+		SSRC:           rand.Uint32(),
+		Port:           port,
+		StartTime:      time.Now(),
 		SequenceNumber: uint16(rand.Int()),
 	}
 
@@ -88,17 +88,28 @@ func messageLoop(port uint16, s *MIDINetworkSession) {
 		}
 		log.Printf("-> incoming message: %v", msg)
 
-		s.getConnection(msg).handleControl(msg, pc, addr)
+		conn, found := s.getConnection(msg)
+		if found {
+			conn.handleControl(msg, pc, addr)
+		}
 	}
 }
 
-func (s *MIDINetworkSession) getConnection(msg sip.ControlMessage) *MIDINetworkConnection {
-	// TODO optimize to only create a session for IN message
-	conn, found := s.connections.LoadOrStore(msg.SSRC, s.createConnection(msg))
-	if !found {
+func (s *MIDINetworkSession) getConnection(msg sip.ControlMessage) (c *MIDINetworkConnection, found bool) {
+	if msg.Cmd == sip.Invitation {
 		log.Printf("New connection requested from remote participant SSRC [%x]", msg.SSRC)
+		conn, found := s.connections.LoadOrStore(msg.SSRC, s.createConnection(msg))
+		if found {
+			log.Printf("Connections was already established to SSRC [%x]", msg.SSRC)		
+		}
+		return conn.(*MIDINetworkConnection), true
 	}
-	return conn.(*MIDINetworkConnection)
+	conn, found := s.connections.Load(msg.SSRC)
+	if !found {
+		log.Printf("Connection to SSRC [%x] not found", msg.SSRC)		
+		return nil, false
+	}
+	return conn.(*MIDINetworkConnection), found
 }
 
 func (s *MIDINetworkSession) removeConnection(conn *MIDINetworkConnection) {
