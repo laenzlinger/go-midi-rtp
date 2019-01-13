@@ -93,7 +93,7 @@ func messageLoop(port uint16, s *MIDINetworkSession) {
 }
 
 func (s *MIDINetworkSession) getConnection(msg sip.ControlMessage) *MIDINetworkConnection {
-	// FIXME optimize to only create a session for IN message
+	// TODO optimize to only create a session for IN message
 	conn, found := s.connections.LoadOrStore(msg.SSRC, s.createConnection(msg))
 	if !found {
 		log.Printf("New connection requested from remote participant SSRC [%x]", msg.SSRC)
