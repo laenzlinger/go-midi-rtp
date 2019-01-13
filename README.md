@@ -12,4 +12,18 @@ This work is inspired and based on the the following open source code:
 
 The project depends on [zeroconf](https://github.com/grandcat/zeroconf) to support service discovery with mDSN
 
+## TODO
+
 WARNING: THIS IMPLEMENTATION IS INCOMPLETE AND WORK IN PROGRESS
+
+The implementation is planned to continue with the following tasks
+
+## Act as session listener
+* Decode receiver feedbak
+* Support journal
+* Support receiving midi payload
+* Support mulitple commands in one message
+
+## Act as session initiator
+* initiate a new connection to a remote session
+
