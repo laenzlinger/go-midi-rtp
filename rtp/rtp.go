@@ -151,8 +151,6 @@ func (mcs MIDICommands) encode(w io.Writer, start time.Time) {
 		mc.Payload.encode(b)
 	}
 
-	// FIXME handle multiple commands
-
 	// FIXME handle messages with size > 15 octets
 	header = header | (byte(b.Len()) & lenMask)
 

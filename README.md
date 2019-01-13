@@ -19,7 +19,8 @@ WARNING: THIS IMPLEMENTATION IS INCOMPLETE AND WORK IN PROGRESS
 The implementation is planned to continue with the following tasks
 
 ## Act as session listener
-* Support mulitple commands in one message
+* Support longer delta times
+* Support larger MIDI messages (> 15 bytes)
 * Support journal
 * Support receiving midi payload
 
