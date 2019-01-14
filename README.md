@@ -12,6 +12,11 @@ This work is inspired and based on the the following open source code:
 
 The project depends on [zeroconf](https://github.com/grandcat/zeroconf) to support service discovery with mDSN
 
+## Supported features
+* Act as session listener
+* Single and mulitple MIDI commands per message with delta time
+
+
 ## TODO
 
 WARNING: THIS IMPLEMENTATION IS INCOMPLETE AND WORK IN PROGRESS
@@ -21,6 +26,7 @@ The implementation is planned to continue with the following tasks
 ## Act as session listener
 * Support journal
 * Support receiving midi payload
+* Support phantom bit
 * Improve Error Handling
 
 ## Act as session initiator
