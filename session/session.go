@@ -44,12 +44,12 @@ func Start(bonjourName string, port uint16) (s *MIDINetworkSession) {
 // End is ending a session
 func (s *MIDINetworkSession) End() {
 	s.connections.Range(func(k, v interface{}) bool {
-		v.(*MIDINetworkConnection).End()
+		v.(*MIDINetworkStream).End()
 		return true
 	})
 }
 
-// SendMIDIPayload sends the MIDI payload immediately to all MIDINetworkConnections
+// SendMIDIPayload sends the MIDI payload immediately to all MIDINetworkStreams
 func (s *MIDINetworkSession) SendMIDIPayload(payload []byte) {
 	mcs := rtp.MIDICommands{
 		Timestamp: time.Now(),
@@ -58,7 +58,7 @@ func (s *MIDINetworkSession) SendMIDIPayload(payload []byte) {
 	s.SendMIDICommands(mcs)
 }
 
-// SendMIDICommands sends the commands to all MIDINetworkConnections
+// SendMIDICommands sends the commands to all MIDINetworkStreams
 func (s *MIDINetworkSession) SendMIDICommands(mcs rtp.MIDICommands) {
 	s.SequenceNumber++
 	m := rtp.MIDIMessage{
@@ -67,7 +67,7 @@ func (s *MIDINetworkSession) SendMIDICommands(mcs rtp.MIDICommands) {
 		Commands:       mcs,
 	}
 	s.connections.Range(func(k, v interface{}) bool {
-		v.(*MIDINetworkConnection).SendMIDIMessage(m)
+		v.(*MIDINetworkStream).SendMIDIMessage(m)
 		return true
 	})
 }
@@ -101,31 +101,31 @@ func messageLoop(port uint16, s *MIDINetworkSession) {
 	}
 }
 
-func (s *MIDINetworkSession) getConnection(msg sip.ControlMessage) (c *MIDINetworkConnection, found bool) {
+func (s *MIDINetworkSession) getConnection(msg sip.ControlMessage) (c *MIDINetworkStream, found bool) {
 	if msg.Cmd == sip.Invitation {
 		log.Printf("New connection requested from remote participant SSRC [%x]", msg.SSRC)
 		conn, found := s.connections.LoadOrStore(msg.SSRC, s.createConnection(msg))
 		if found {
 			log.Printf("Connections was already established to SSRC [%x]", msg.SSRC)
 		}
-		return conn.(*MIDINetworkConnection), true
+		return conn.(*MIDINetworkStream), true
 	}
 	conn, found := s.connections.Load(msg.SSRC)
 	if !found {
 		log.Printf("Connection to SSRC [%x] not found", msg.SSRC)
 		return nil, false
 	}
-	return conn.(*MIDINetworkConnection), found
+	return conn.(*MIDINetworkStream), found
 }
 
-func (s *MIDINetworkSession) removeConnection(conn *MIDINetworkConnection) {
+func (s *MIDINetworkSession) removeConnection(conn *MIDINetworkStream) {
 	log.Printf("Connection ended by remote participant SSRC [%x]", conn.RemoteSSRC)
 	s.connections.Delete(conn.RemoteSSRC)
 }
 
-func (s *MIDINetworkSession) createConnection(msg sip.ControlMessage) *MIDINetworkConnection {
+func (s *MIDINetworkSession) createConnection(msg sip.ControlMessage) *MIDINetworkStream {
 	host := MIDINetworkHost{BonjourName: msg.Name}
-	conn := MIDINetworkConnection{
+	conn := MIDINetworkStream{
 		Session:    s,
 		Host:       host,
 		RemoteSSRC: msg.SSRC,
