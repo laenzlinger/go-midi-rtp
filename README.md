@@ -7,7 +7,7 @@ Apple's specific session initiation protocol.
 
 This work is inspired and based on the the following open source code:
 
-* [reaveloxmidi](https://github.com/ravelox/pimidi/tree/master/raveloxmidi)
+* [raveloxmidi](https://github.com/ravelox/pimidi/tree/master/raveloxmidi)
 * [node-rtpmidi](https://github.com/jdachtera/node-rtpmidi)
 
 The project depends on [zeroconf](https://github.com/grandcat/zeroconf) to support service discovery with mDSN
@@ -20,6 +20,7 @@ The project depends on [zeroconf](https://github.com/grandcat/zeroconf) to suppo
 ## TODO
 
 WARNING: THIS IMPLEMENTATION IS INCOMPLETE AND WORK IN PROGRESS
+
 The API is not yet stable and will change in future.
 
 The implementation is planned to continue with the following tasks
