@@ -20,6 +20,7 @@ The project depends on [zeroconf](https://github.com/grandcat/zeroconf) to suppo
 ## TODO
 
 WARNING: THIS IMPLEMENTATION IS INCOMPLETE AND WORK IN PROGRESS
+The API is not yet stable and will change in future.
 
 The implementation is planned to continue with the following tasks
 
@@ -27,7 +28,9 @@ The implementation is planned to continue with the following tasks
 * Support journal
 * Support receiving midi payload
 * Support phantom bit
-* Improve Error Handling
+* Improve error handling
+* Merge multiple streams
+* Hide implementation details (Slimmer API)
 
 ## Act as session initiator
 * initiate a new connection to a remote session
