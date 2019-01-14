@@ -50,9 +50,19 @@ func main() {
 		case <-msg:
 			mcs := rtp.MIDICommands{
 				Timestamp: time.Now(),
-				Commands:  []rtp.MIDICommand{
-					{Payload: []byte{0x96, 0x3c, 0x7f}},
-					{Payload: []byte{0x86, 0x3c, 0x00}, DeltaTime: time.Second},
+				// Play 4 notes of a C-Major chord
+				Commands: []rtp.MIDICommand{
+					// On the first command, Delta Time should not be needed but it seems
+					// that the Apple Midi Network Driver ignores all delta times
+					// in case the Z-flag is not set.
+					{Payload: []byte{0x96, 0x3c, 0x4f}, DeltaTime: time.Millisecond},
+					{Payload: []byte{0x86, 0x3c, 0x00}, DeltaTime: 500 * time.Millisecond},
+					{Payload: []byte{0x96, 0x40, 0x5f}},
+					{Payload: []byte{0x86, 0x40, 0x00}, DeltaTime: 500 * time.Millisecond},
+					{Payload: []byte{0x96, 0x43, 0x6f}},
+					{Payload: []byte{0x86, 0x43, 0x00}, DeltaTime: 500 * time.Millisecond},
+					{Payload: []byte{0x96, 0x48, 0x7f}},
+					{Payload: []byte{0x86, 0x48, 0x00}, DeltaTime: time.Second},
 				},
 			}
 

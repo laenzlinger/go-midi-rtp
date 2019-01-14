@@ -151,10 +151,17 @@ func (mcs MIDICommands) encode(w io.Writer, start time.Time) {
 		mc.Payload.encode(b)
 	}
 
-	// FIXME handle messages with size > 15 octets
-	header = header | (byte(b.Len()) & lenMask)
+	if b.Len() > 4095 {
+		// FIXME handle messages with size > 4095 octets (error and crop)
+	} else if b.Len() > 15 {
+		header = header | bigHeaderBit | (byte(b.Len()>>8) & lenMask)
+		count := byte(b.Len())
+		w.Write([]byte{header, count})
+	} else {
+		header = header | (byte(b.Len()) & lenMask)
+		w.Write([]byte{header})
+	}
 
-	binary.Write(w, binary.BigEndian, header)
 	w.Write(b.Bytes())
 }
 

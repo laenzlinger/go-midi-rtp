@@ -114,24 +114,35 @@ func Test_encode_of_mulitple_commands(t *testing.T) {
 	// given
 	now := time.Now()
 	b := new(bytes.Buffer)
-	on := MIDICommand{
-		Payload: []byte{0x90, 0x3c, 0x40},
-	}
-	off := MIDICommand{
-		Payload:   []byte{0x80, 0x3c, 0x00},
-		DeltaTime: 10 * time.Millisecond,
-	}
 	mcs := MIDICommands{
-		Commands:  []MIDICommand{on, off},
+		Commands: []MIDICommand{
+			{Payload: []byte{0x90, 0x3c, 0x40}},
+			{Payload: []byte{0x80, 0x3c, 0x00}, DeltaTime: time.Second},
+			{Payload: []byte{0x90, 0x3e, 0x40}},
+			{Payload: []byte{0x80, 0x3e, 0x00}, DeltaTime: time.Second},
+		},
 		Timestamp: now,
 	}
 	// when
 	mcs.encode(b, now)
-	// then
+	/* then
+	           0                   1                   2                   3
+	       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	      |B|J|Z|P|LEN... |   LEN (Low)   |    MIDI list ...              |
+		  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	      |1|0|0|0|0 0 0 0|     0x11      |     0x90          0x3c        |
+		  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+	*/
 	assert.Equal(t, []byte{
-		0x07,             // Header
+		0x80, 0x11, // Header
 		0x90, 0x3c, 0x40, // MIDI command (note on)
-		0x64,             // Delta time (100 ticks)
+		0xce, 0x10, // Delta time (100 ticks)
 		0x80, 0x3c, 0x00, // MIDI command (note off)
+		0x00,             // Delta time (0 ticks)
+		0x90, 0x3e, 0x40, // MIDI command (note on)
+		0xce, 0x10, // Delta time (100 ticks)
+		0x80, 0x3e, 0x00, // MIDI command (note off)
 	}, b.Bytes())
 }
