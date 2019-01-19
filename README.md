@@ -26,12 +26,17 @@ The API is not yet stable and will change in future.
 The implementation is planned to continue with the following tasks
 
 ## Act as session listener
-* Support journal
+* Send recovery journal
+  * Support closed-loop sending policy
+  * Support channel-journal
+  * Support system-journal
 * Support receiving midi payload
-* Support phantom bit
+  * Receive recovery journal
 * Improve error handling
 * Merge multiple streams
 * Hide implementation details (Slimmer API)
+* Support phantom bit
+* Support enhanced Chapter C encoding
 
 ## Act as session initiator
 * initiate a new connection to a remote session
