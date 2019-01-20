@@ -24,6 +24,7 @@ type ChapterN struct {
 	NoteOff       []NoteOff // Max. 16 OffBit messages
 }
 
+// NoteOn containst the last NoteOn data for a note
 /*
 
    0                   1
@@ -39,7 +40,7 @@ type NoteOn struct {
 	Velocity           uint8 // never 0
 	PlayRecommendation bool  // Y=1: play Y=0: skip
 }
-
+// NoteOff contains information about NoteOff
 type NoteOff struct {
 	NoteNum uint8
 }
