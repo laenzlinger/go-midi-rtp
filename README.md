@@ -29,6 +29,8 @@ The implementation is planned to continue with the following tasks
 * Send recovery journal
   * Support closed-loop sending policy
   * Support channel-journal
+    * Chapter-N
+    * Other Chapters
   * Support system-journal
 * Support receiving midi payload
   * Receive recovery journal
