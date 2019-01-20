@@ -32,6 +32,7 @@ The implementation is planned to continue with the following tasks
   * Support system-journal
 * Support receiving midi payload
   * Receive recovery journal
+* Keep-alive message (empty data)
 * Improve error handling
 * Merge multiple streams
 * Hide implementation details (Slimmer API)

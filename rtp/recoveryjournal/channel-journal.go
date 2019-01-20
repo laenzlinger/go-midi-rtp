@@ -1,7 +1,14 @@
 package recoveryjournal
 
-// ChannelJournal maintains the state of a channel.
+// ChannelJournal contains the top level hierarchy for all channels.
 type ChannelJournal struct {
+    // Channels contains channel journal state. Index is MIDI channel. (0-15)
+	Channels map[uint8]Chapters
+}
+
+// Chapters contains the chapters for a channel.
+type Chapters struct {
+	ChapterN[] ChapterN
 }
 
 /*

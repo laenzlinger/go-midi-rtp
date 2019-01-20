@@ -1,7 +1,27 @@
 package recoveryjournal
 
-// RecoveryJournal maintains the state of the journal.
+import (
+	"github.com/laenzlinger/go-midi-rtp/rtp"
+)
+
+// CheckpointHistory contains the history of sent packets of a stream
+// since the start of the checkopoint.
+type CheckpointHistory struct {
+	SentMessages []rtp.MIDIMessage
+}
+
+
+// RecoveryJournal contains the internal structure of the complete
+// sender recovery journal
 type RecoveryJournal struct {
+	// SequNum contains the extended sequence number, or 0.
+	// SequNum = 0 codes empty journal
+	CheckpointPackageSeqNum   uint32
+
+	// ChannelJournal contains the channel part of the history
+	ChannelJournal ChannelJournal
+
+	// FUTURE_WOK: add system journal
 }
 
 /*
