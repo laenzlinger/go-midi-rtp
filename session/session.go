@@ -15,7 +15,7 @@ import (
 
 // MIDINetworkSession can offer or accept streams.
 type MIDINetworkSession struct {
-	LocalNaame     string
+	LocalName      string
 	BonjourName    string
 	Port           uint16
 	SSRC           uint32
