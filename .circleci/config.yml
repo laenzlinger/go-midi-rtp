@@ -2,8 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: golang:1.11.4
+      - image: golang:1.13.4
     steps:
       - checkout
-      - run: go build
-      - run: go test ./...
+      - run: make all
