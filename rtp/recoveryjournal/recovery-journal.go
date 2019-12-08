@@ -10,18 +10,17 @@ type CheckpointHistory struct {
 	SentMessages []rtp.MIDIMessage
 }
 
-
 // RecoveryJournal contains the internal structure of the complete
 // sender recovery journal
 type RecoveryJournal struct {
 	// SequNum contains the extended sequence number, or 0.
 	// SequNum = 0 codes empty journal
-	CheckpointPackageSeqNum   uint32
+	CheckpointPackageSeqNum uint32
 
 	// ChannelJournal contains the channel part of the history
 	ChannelJournal ChannelJournal
 
-	// FUTURE_WOK: add system journal
+	// TODO add system journal
 }
 
 /*
