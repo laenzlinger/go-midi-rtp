@@ -11,7 +11,7 @@ MIDIBOX=pi@midibox
 
 all: test build
 
-build: ## buld
+build: ## build
 	$(GOBUILD)
 
 test: ## run unit tests
