@@ -15,7 +15,7 @@ build: ## build
 	$(GOBUILD)
 
 test: ## run unit tests
-	$(GOTEST) -v ./...
+	$(GOTEST) ./...
 
 clean: ## clean all temporary files
 	$(GOCLEAN)
