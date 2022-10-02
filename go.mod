@@ -2,7 +2,7 @@ module github.com/laenzlinger/go-midi-rtp
 
 require (
 	github.com/go-test/deep v1.0.1
-	github.com/grandcat/zeroconf v1.0.0
+	github.com/grandcat/zeroconf v1.0.1-0.20220623170244-e1d6e579e89f
 	github.com/stretchr/testify v1.3.0
 )
 
